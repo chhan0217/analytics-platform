@@ -18,7 +18,7 @@ import java.util.Base64
 import java.util.UUID
 
 class EventQueryService {
-    @Suppress("LongParameterList")
+    @Suppress("LongParameterList", "UnusedParameter")
     fun findEvents(
         projectId: String,
         startDate: String,

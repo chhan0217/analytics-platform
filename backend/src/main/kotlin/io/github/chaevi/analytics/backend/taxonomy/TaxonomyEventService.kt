@@ -12,6 +12,7 @@ class TaxonomyEventService(
 ) {
     private val eventKeyPattern = Regex("^[a-z][a-z0-9_]{0,127}$")
 
+    @Suppress("ThrowsCount")
     fun create(
         projectId: String,
         request: CreateTaxonomyEventRequest,
@@ -56,6 +57,7 @@ class TaxonomyEventService(
         return transaction { repository.findAllByProject(projUuid, page, pageSize) }
     }
 
+    @Suppress("UnusedParameter")
     fun findById(
         projectId: String,
         eventId: String,

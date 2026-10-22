@@ -1,3 +1,5 @@
+@file:Suppress("MatchingDeclarationName")
+
 package io.github.chaevi.analytics.backend.taxonomy
 
 data class SystemEventDef(

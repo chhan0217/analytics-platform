@@ -9,7 +9,7 @@ class TaxonomyPropertyService(
     private val repository: TaxonomyPropertyRepository = TaxonomyPropertyRepository(),
     private val eventRepository: TaxonomyEventRepository = TaxonomyEventRepository(),
 ) {
-    @Suppress("ThrowsCount")
+    @Suppress("ThrowsCount", "UnusedParameter")
     fun create(
         projectId: String,
         eventId: String,
@@ -51,6 +51,7 @@ class TaxonomyPropertyService(
         }
     }
 
+    @Suppress("UnusedParameter")
     fun findAllByEvent(
         projectId: String,
         eventId: String,

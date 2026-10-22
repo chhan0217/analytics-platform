@@ -35,23 +35,9 @@ class IngestService(
         ingestionKey: String?,
         request: IngestRequest,
     ): IngestResponse {
-        if (ingestionKey.isNullOrBlank()) {
-            throw ApiException("INVALID_INGESTION_KEY", HttpStatusCode.Unauthorized, "수집 키가 필요합니다")
-        }
+        validateIngestRequest(ingestionKey, request)
 
-        if (request.events.isEmpty()) {
-            throw ApiException("VALIDATION_ERROR", HttpStatusCode.BadRequest, "이벤트가 비어있습니다")
-        }
-
-        if (request.events.size > MAX_BATCH_SIZE) {
-            throw ApiException(
-                "PAYLOAD_TOO_LARGE",
-                HttpStatusCode.PayloadTooLarge,
-                "배치 최대 ${MAX_BATCH_SIZE}개를 초과했습니다: ${request.events.size}",
-            )
-        }
-
-        val keyHash = IngestionKeyUtil.hash(ingestionKey)
+        val keyHash = IngestionKeyUtil.hash(ingestionKey!!)
         val credential =
             transaction { credentialRepository.findByKeyHash(keyHash) }
                 ?: throw ApiException("INVALID_INGESTION_KEY", HttpStatusCode.Unauthorized, "유효하지 않은 수집 키입니다")
@@ -66,16 +52,48 @@ class IngestService(
 
         val projectId = UUID.fromString(application.projectId)
         val applicationId = UUID.fromString(application.id)
-        val platform = application.platform
         val now = Clock.System.now()
+        val policy = transaction { projectRepository.findById(projectId) }?.unregisteredEventPolicy ?: "PERMISSIVE"
 
-        val project = transaction { projectRepository.findById(projectId) }
+        val (accepted, duplicated) = processEvents(request.events, projectId, applicationId, policy, now)
 
+        logger.info { "이벤트 수집 완료: accepted=$accepted, duplicated=$duplicated, app=$applicationId" }
+        return IngestResponse(accepted = accepted, duplicated = duplicated)
+    }
+
+    @Suppress("ThrowsCount")
+    private fun validateIngestRequest(
+        ingestionKey: String?,
+        request: IngestRequest,
+    ) {
+        if (ingestionKey.isNullOrBlank()) {
+            throw ApiException("INVALID_INGESTION_KEY", HttpStatusCode.Unauthorized, "수집 키가 필요합니다")
+        }
+        if (request.events.isEmpty()) {
+            throw ApiException("VALIDATION_ERROR", HttpStatusCode.BadRequest, "이벤트가 비어있습니다")
+        }
+        if (request.events.size > MAX_BATCH_SIZE) {
+            throw ApiException(
+                "PAYLOAD_TOO_LARGE",
+                HttpStatusCode.PayloadTooLarge,
+                "배치 최대 ${MAX_BATCH_SIZE}개를 초과했습니다: ${request.events.size}",
+            )
+        }
+    }
+
+    @Suppress("LoopWithTooManyJumpStatements")
+    private fun processEvents(
+        events: List<IngestEvent>,
+        projectId: UUID,
+        applicationId: UUID,
+        policy: String,
+        now: Instant,
+    ): Pair<Int, Int> {
         var accepted = 0
         var duplicated = 0
 
         transaction {
-            for (event in request.events) {
+            for (event in events) {
                 val eventId =
                     try {
                         UUID.fromString(event.eventId)
@@ -95,7 +113,7 @@ class IngestService(
                     continue
                 }
 
-                validateEvent(event, projectId, project?.unregisteredEventPolicy ?: "PERMISSIVE")
+                validateEvent(event, projectId, policy)
 
                 val occurredAt = parseInstant(event.occurredAt)
                 val sessionId = UUID.fromString(event.sessionId)
@@ -124,8 +142,7 @@ class IngestService(
             }
         }
 
-        logger.info { "이벤트 수집 완료: accepted=$accepted, duplicated=$duplicated, app=$applicationId" }
-        return IngestResponse(accepted = accepted, duplicated = duplicated)
+        return Pair(accepted, duplicated)
     }
 
     private fun validateEvent(

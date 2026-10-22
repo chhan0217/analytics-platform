@@ -151,10 +151,13 @@ class EventQueryRouteTest {
             page1.meta.nextCursor shouldNotBe null
 
             // 커서로 다음 페이지 요청 — 이전 페이지 ID와 중복 없어야 함
+            val cursor = page1.meta.nextCursor
             val page2 =
                 adminClient
                     .get(
-                        "/admin/projects/$projId/events?start_date=2026-10-22T00:00:00Z&end_date=2026-10-22T23:59:59Z&page_size=3&cursor=${page1.meta.nextCursor}",
+                        "/admin/projects/$projId/events" +
+                            "?start_date=2026-10-22T00:00:00Z&end_date=2026-10-22T23:59:59Z" +
+                            "&page_size=3&cursor=$cursor",
                     ).body<CursorListResponse<EventResponse>>()
 
             val allIds = (page1.data.map { it.id } + page2.data.map { it.id }).toSet()
