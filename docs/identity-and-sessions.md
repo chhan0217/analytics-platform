@@ -113,13 +113,24 @@ Analytics.identify("user_B")
 ### 7.3 세션 종료
 
 - **비활동 타임아웃**: 마지막 이벤트 이후 30분(기본값, 설정 가능) 동안 이벤트 없으면 만료
+- **최대 지속 시간**: 24시간 초과 시 무조건 새 세션
 - 다음 이벤트 발생 시 이전 세션 만료를 감지하고 새 세션 시작
 - `session_end` 전송은 best-effort:
   - 정상 종료: 앱이 포그라운드 복귀 시 타임아웃 감지 → session_end 전송
   - 강제 종료/크래시: session_end 미전송 가능
   - 서버: `last_event_at` 기준으로 타임아웃 만료를 판정할 수 있어야 함
 
-### 7.4 세션 ID
+### 7.4 세션 영속화 (업계 표준)
+
+- 세션 ID, 시작 시간, 마지막 이벤트 시간을 **로컬 저장소에 영속화**
+  - Android: SharedPreferences
+  - iOS: NSUserDefaults
+  - Web: localStorage
+- 앱이 종료(kill/crash)되더라도 30분 내 재실행 시 **같은 세션 유지**
+- 앱 종료 후 30분 초과 시 새 세션 시작
+- Firebase Analytics, Amplitude 등 업계 표준과 동일한 정책
+
+### 7.5 세션 ID
 
 - UUID v4로 SDK에서 생성
 - 세션 범위에서만 유효

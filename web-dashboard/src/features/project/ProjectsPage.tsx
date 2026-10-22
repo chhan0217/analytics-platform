@@ -93,6 +93,9 @@ export default function ProjectsPage() {
                 <Link to={`/projects/${p.id}/events`} style={{ color: "#4f46e5", fontSize: 13 }}>
                   이벤트
                 </Link>
+                <Link to={`/projects/${p.id}/analytics`} style={{ color: "#4f46e5", fontSize: 13 }}>
+                  분석
+                </Link>
               </td>
             </tr>
           ))}

@@ -1,7 +1,7 @@
 package io.github.chaevi.analytics.sdk.api
 
 import io.github.chaevi.analytics.sdk.data.local.InMemoryEventQueue
-import io.github.chaevi.analytics.sdk.data.local.InMemoryStorage
+import io.github.chaevi.analytics.sdk.data.local.createPlatformStorage
 import io.github.chaevi.analytics.sdk.data.remote.HttpEventSender
 import io.github.chaevi.analytics.sdk.domain.model.AnalyticsEvent
 import io.github.chaevi.analytics.sdk.domain.repository.EventQueueRepository
@@ -38,7 +38,7 @@ object Analytics {
     @OptIn(ExperimentalSerializationApi::class)
     fun initialize(
         config: AnalyticsConfig,
-        storage: StorageRepository = InMemoryStorage(),
+        storage: StorageRepository = createPlatformStorage(),
     ) {
         if (initialized) return
 
