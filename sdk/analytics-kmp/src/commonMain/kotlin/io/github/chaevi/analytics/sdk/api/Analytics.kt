@@ -8,6 +8,7 @@ import io.github.chaevi.analytics.sdk.domain.repository.EventQueueRepository
 import io.github.chaevi.analytics.sdk.domain.repository.StorageRepository
 import io.github.chaevi.analytics.sdk.domain.usecase.EventDispatcher
 import io.github.chaevi.analytics.sdk.domain.usecase.IdentityManager
+import io.github.chaevi.analytics.sdk.domain.usecase.SdkLogger
 import io.github.chaevi.analytics.sdk.domain.usecase.SessionManager
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -42,6 +43,8 @@ object Analytics {
         if (initialized) return
 
         this.config = config
+        SdkLogger.enabled = config.enableLogging
+        SdkLogger.d("SDK", "초기화 시작: baseUrl=${config.baseUrl}")
         identityManager = IdentityManager(storage)
         sessionManager = SessionManager(storage, config.sessionTimeoutMs, config.sessionMaxDurationMs)
         eventQueue = InMemoryEventQueue(config.maxQueueSize)
@@ -101,9 +104,11 @@ object Analytics {
 
     fun flush() {
         checkInitialized()
+        SdkLogger.d("SDK", "flush 요청 (큐: ${eventQueue.size()}건)")
         scope.launch {
             try {
-                eventDispatcher.flush()
+                val result = eventDispatcher.flush()
+                SdkLogger.d("SDK", "flush 완료: sent=${result.sent}, failed=${result.failed}")
             } catch (e: Exception) {
                 notifyError("FLUSH_ERROR", e.message ?: "이벤트 전송 실패")
             }
@@ -144,6 +149,7 @@ object Analytics {
             )
 
         eventQueue.enqueue(event)
+        SdkLogger.d("SDK", "이벤트 큐 추가: $eventKey [${event.eventId.take(8)}...] (큐: ${eventQueue.size()}건)")
     }
 
     private fun startPeriodicFlush() {

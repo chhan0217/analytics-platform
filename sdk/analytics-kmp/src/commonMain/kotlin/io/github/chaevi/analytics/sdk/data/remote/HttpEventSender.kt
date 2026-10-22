@@ -5,10 +5,12 @@ import io.github.chaevi.analytics.sdk.domain.model.IngestPayload
 import io.github.chaevi.analytics.sdk.domain.model.SdkInfo
 import io.github.chaevi.analytics.sdk.domain.repository.EventSender
 import io.github.chaevi.analytics.sdk.domain.repository.SendResult
+import io.github.chaevi.analytics.sdk.domain.usecase.SdkLogger
 import io.ktor.client.HttpClient
 import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 
@@ -25,6 +27,14 @@ class HttpEventSender(
                     events = events,
                 )
 
+            SdkLogger.d(
+                "HTTP",
+                "POST /ingest/events (${events.size}건) → $baseUrl",
+            )
+            events.forEach { e ->
+                SdkLogger.d("HTTP", "  - ${e.eventKey} [${e.eventId.take(8)}...]")
+            }
+
             val response =
                 client.post("$baseUrl/ingest/events") {
                     header("X-Ingestion-Key", apiKey)
@@ -32,13 +42,24 @@ class HttpEventSender(
                     setBody(payload)
                 }
 
-            when (response.status.value) {
+            val body = response.bodyAsText()
+            val status = response.status.value
+            SdkLogger.d("HTTP", "응답: $status $body")
+
+            when (status) {
                 in 200..299 -> SendResult.SUCCESS
-                in 400..499 -> SendResult.REJECTED
-                in 500..599 -> SendResult.SERVER_ERROR
+                in 400..499 -> {
+                    SdkLogger.e("HTTP", "거부됨: $status $body")
+                    SendResult.REJECTED
+                }
+                in 500..599 -> {
+                    SdkLogger.e("HTTP", "서버 오류: $status")
+                    SendResult.SERVER_ERROR
+                }
                 else -> SendResult.NETWORK_ERROR
             }
         } catch (e: Exception) {
+            SdkLogger.e("HTTP", "네트워크 오류: ${e.message}")
             SendResult.NETWORK_ERROR
         }
 
