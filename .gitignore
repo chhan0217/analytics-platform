@@ -20,6 +20,9 @@ local.properties
 # Node
 node_modules/
 dist/
+# tsc 산출물 (src 내 .js/.d.ts)
+sdk/**/src/**/*.js
+sdk/**/src/**/*.d.ts
 
 # 환경 변수
 .env

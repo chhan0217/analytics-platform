@@ -37,3 +37,8 @@ android {
         compose = true
     }
 }
+
+dependencies {
+    implementation(platform(libs.compose.bom))
+    implementation(libs.compose.material3)
+}

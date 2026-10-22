@@ -9,7 +9,10 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "outDir": "dist",
-    "rootDir": "src"
+    "rootDir": "src",
+    "paths": {
+      "@chaevi/analytics-web-sdk": ["../../sdk/analytics-web/src/index.ts"]
+    }
   },
   "include": ["src"]
 }
