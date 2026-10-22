@@ -13,6 +13,10 @@ on:
     paths:
       - 'backend/**'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
@@ -49,13 +53,7 @@ jobs:
           java-version: '17'
 
       - name: Gradle 캐시
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-backend-${{ hashFiles('**/*.gradle.kts', 'gradle/libs.versions.toml') }}
-          restore-keys: ${{ runner.os }}-gradle-backend-
+        uses: gradle/actions/setup-gradle@v4
 
-      - name: 빌드 + 테스트 + 코드 품질 (클린)
-        run: ./gradlew clean :backend:build
+      - name: 빌드 + 테스트 + 코드 품질
+        run: ./gradlew :backend:build

@@ -15,8 +15,13 @@ on:
       - 'sdk/analytics-kmp/**'
       - 'sdk/analytics-compose/**'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  build-and-test:
+  android-common:
+    name: Android + Common 검증
     runs-on: macos-latest
 
     steps:
@@ -29,14 +34,46 @@ jobs:
           java-version: '17'
 
       - name: Gradle 캐시
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Konan 캐시
         uses: actions/cache@v4
         with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-            ~/.konan
-          key: ${{ runner.os }}-gradle-sdk-${{ hashFiles('**/*.gradle.kts', 'gradle/libs.versions.toml') }}
-          restore-keys: ${{ runner.os }}-gradle-sdk-
+          path: ~/.konan
+          key: ${{ runner.os }}-konan-${{ hashFiles('sdk/analytics-kmp/build.gradle.kts', 'gradle/libs.versions.toml') }}
+          restore-keys: ${{ runner.os }}-konan-
 
-      - name: KMP SDK + Compose 어댑터 빌드 (클린)
-        run: ./gradlew clean :sdk:analytics-kmp:build :sdk:analytics-compose:build
+      - name: Android + Common 빌드/테스트
+        run: >-
+          ./gradlew
+          :sdk:analytics-kmp:compileCommonMainKotlinMetadata
+          :sdk:analytics-kmp:compileDebugKotlinAndroid
+          :sdk:analytics-kmp:compileReleaseKotlinAndroid
+          :sdk:analytics-compose:build
+
+  ios:
+    name: iOS 전체 검증
+    if: github.event_name == 'push'
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: JDK 17 설정
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Gradle 캐시
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Konan 캐시
+        uses: actions/cache@v4
+        with:
+          path: ~/.konan
+          key: ${{ runner.os }}-konan-${{ hashFiles('sdk/analytics-kmp/build.gradle.kts', 'gradle/libs.versions.toml') }}
+          restore-keys: ${{ runner.os }}-konan-
+
+      - name: KMP SDK 전체 빌드 (Android + iOS)
+        run: ./gradlew :sdk:analytics-kmp:build :sdk:analytics-compose:build
