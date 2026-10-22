@@ -7,4 +7,4 @@ export {
   resetIdentity,
   flush,
 } from "./analytics";
-export type { AnalyticsConfig, AnalyticsError } from "./types";
+export type { AnalyticsConfig, AnalyticsError, AnalyticsEvent } from "./types";
