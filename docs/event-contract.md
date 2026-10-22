@@ -52,7 +52,6 @@
 |---|---|---|
 | `sequence_number` | integer | 세션 내 이벤트 순서 번호 |
 | `external_user_id` | string | identify() 호출 후 설정되는 로그인 사용자 ID |
-| `user_properties` | object | setUserProperties()로 설정된 사용자 속성 |
 
 ### 서버가 결정하는 필드 (클라이언트가 보내지 않음)
 
@@ -120,10 +119,12 @@ Content-Type: application/json
 |---|---|---|
 | `session_start` | 세션 시작 | - |
 | `session_end` | 세션 종료 (best-effort) | `duration_ms` |
-| `screen_view` | 화면 조회 | `screen_id`, `referrer_screen_id` |
-| `app_open` | 앱 실행 | `is_first_open` |
+| `screen_view` | 화면 조회 | `screen_id`, `referrer_screen_id` (현재 `screen_id`만 전송) |
+| `app_open` | 앱 실행 | `is_first_open` (향후 구현) |
 | `button_click` | 버튼 클릭 | `button_id`, `screen_id` |
 | `identify` | 사용자 식별 | `external_user_id` |
+
+> **현재 구현 상태**: Web SDK는 `app_open`과 `identify`만 자동 전송한다. `session_start`/`session_end` 자동 전송은 향후 구현 예정이다. KMP SDK도 동일한 상태이다.
 
 ## 5. 커스텀 이벤트
 
@@ -141,8 +142,8 @@ Content-Type: application/json
 ```
 
 - event_key는 영문 snake_case 필수
-- 텍소노미에 등록된 필수 속성(required properties)은 서버에서 검증
-- 미등록 이벤트 정책: 프로토타입 기본값은 **경고 로그 후 수집 허용** (개발 편의). 운영 시 설정으로 거부/격리 전환 가능.
+- 텍소노미에 등록된 필수 속성(required properties) 검증은 향후 구현 예정. 현재는 event_key 존재 여부와 상태(ARCHIVED 거부)만 서버에서 검증한다.
+- 미등록 이벤트 정책: 프로토타입 기본값은 **경고 로그 후 수집 허용** (개발 편의). 운영 시 STRICT 모드로 전환하여 거부 가능.
 
 ## 6. context 필드 상세
 
@@ -162,12 +163,16 @@ Content-Type: application/json
 | `browser_version` | string | Web | 브라우저 버전 |
 | `network_type` | string | Mobile | wifi, cellular, unknown |
 
+> **현재 구현 상태**:
+> - **Web SDK**: `browser_name`에 `navigator.userAgent` 원문을 저장한다. `browser_version`, `os_version` 파싱은 향후 구현 예정이다.
+> - **KMP SDK**: `EventContext` 모델은 정의되어 있으나 이벤트 전송 시 context에 포함하지 않는다 (빈 객체). 향후 플랫폼별 context 수집을 구현한다.
+
 ## 7. 제약 사항
 
 | 항목 | 제한 |
 |---|---|
-| 배치 최대 이벤트 수 | 100개 |
-| 배치 최대 페이로드 크기 | 500KB |
+| 배치 최대 이벤트 수 | 100개 (서버에서 검증) |
+| 배치 최대 페이로드 크기 | 500KB (향후 구현 예정, 현재 이벤트 수만 검증) |
 | event_key 최대 길이 | 128자 |
 | property key 최대 길이 | 128자 |
 | property value 최대 길이 | 2048자 (문자열) |
