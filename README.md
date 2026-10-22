@@ -124,6 +124,50 @@ cd sdk/analytics-web && npm run build
 cd web-dashboard && npm run build
 ```
 
+## 테스트
+
+### Backend 테스트
+
+PostgreSQL이 실행 중이어야 합니다.
+
+```bash
+# PostgreSQL 기동
+docker compose -f infra/docker-compose.yml up -d
+
+# 전체 테스트 (단위 + 통합 + E2E)
+./gradlew :backend:test
+
+# E2E 테스트만
+./gradlew :backend:test --tests "io.github.chaevi.analytics.backend.e2e.*"
+```
+
+### E2E 테스트 시나리오
+
+| 테스트 클래스 | 시나리오 | 검증 내용 |
+|---|---|---|
+| `ProjectIsolationTest` | 멀티 프로젝트 격리 | 동일 `external_user_id`가 프로젝트 간 격리 |
+| `ProjectIsolationTest` | 크로스 플랫폼 이벤트 통합 | Android/Web 이벤트가 같은 프로젝트에서 통합 조회 |
+| `ProjectIsolationTest` | 크로스 플랫폼 세션 통합 | 동일 사용자의 Android/Web 세션이 모두 조회 |
+| `IngestValidationTest` | Idempotency | 동일 `event_id` 재전송 시 중복 저장 방지 |
+| `IngestValidationTest` | ARCHIVED 이벤트 거부 | 보관된 이벤트 수집 시 400 응답 |
+| `IngestValidationTest` | 잘못된 수집 키 | 유효하지 않은 키로 요청 시 401 응답 |
+| `IngestValidationTest` | 배치 크기 검증 | 빈 배치 400, 100개 초과 413 응답 |
+| `AnalyticsAccuracyTest` | Overview 수치 | 이벤트/세션/사용자 수 정확성 |
+| `AnalyticsAccuracyTest` | Screen 통계 | 화면별 조회수/고유 사용자 수 정확성 |
+| `AnalyticsAccuracyTest` | Funnel 전환율 | 단계별 전환 사용자 수 및 전환율 정확성 |
+
+### Web Dashboard 테스트
+
+```bash
+cd web-dashboard && npm test
+```
+
+### KMP SDK 테스트
+
+```bash
+./gradlew :sdk:analytics-kmp:allTests
+```
+
 ## 코드 품질
 
 ```bash
@@ -186,6 +230,14 @@ open /Applications/Docker.app
 ### Android Emulator에서 서버 접속 불가
 
 Emulator에서 호스트 접근 주소는 `10.0.2.2`. Backend URL을 `http://10.0.2.2:8080`으로 설정.
+
+## 알려진 제한사항
+
+- **테스트 DB 의존**: Backend 테스트는 실제 PostgreSQL이 필요합니다. H2 인메모리 DB로 대체할 수 없습니다 (JSONB, PostgreSQL 전용 문법 사용).
+- **관리자 인증**: 로컬 환경에서는 간소화된 JWT 인증을 사용합니다. 운영 배포 전 OAuth/OIDC 등 강화가 필요합니다.
+- **Rate Limiting**: 수집 API에 Rate Limiting이 적용되어 있지 않습니다. 운영 시 별도 구성이 필요합니다.
+- **SDK 세션 영속화**: iOS 플랫폼에서는 `NSUserDefaults` 기반으로 구현되어 있으며, 대용량 이벤트 큐에는 SQLDelight 마이그레이션이 권장됩니다.
+- **Identity Linking**: `external_user_id` 기반 사용자 식별만 지원합니다. 디바이스 간 anonymous ID 병합은 미구현입니다.
 
 ## 문서
 
