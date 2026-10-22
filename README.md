@@ -70,7 +70,7 @@ npm install    # 최초 1회
 npm run dev
 ```
 
-브라우저에서 `http://localhost:5173` 접속.
+브라우저에서 `http://localhost:5173` 접속. 기본 관리자 계정: `admin@analytics.local` / `admin1234`
 
 ### 4. Android 샘플 앱
 
@@ -156,10 +156,10 @@ docker compose -f infra/docker-compose.yml up -d
 | `AnalyticsAccuracyTest` | Screen 통계 | 화면별 조회수/고유 사용자 수 정확성 |
 | `AnalyticsAccuracyTest` | Funnel 전환율 | 단계별 전환 사용자 수 및 전환율 정확성 |
 
-### Web Dashboard 테스트
+### Web SDK 테스트
 
 ```bash
-cd web-dashboard && npm test
+cd sdk/analytics-web && npm test
 ```
 
 ### KMP SDK 테스트
@@ -236,8 +236,11 @@ Emulator에서 호스트 접근 주소는 `10.0.2.2`. Backend URL을 `http://10.
 - **테스트 DB 의존**: Backend 테스트는 실제 PostgreSQL이 필요합니다. H2 인메모리 DB로 대체할 수 없습니다 (JSONB, PostgreSQL 전용 문법 사용).
 - **관리자 인증**: 로컬 환경에서는 간소화된 JWT 인증을 사용합니다. 운영 배포 전 OAuth/OIDC 등 강화가 필요합니다.
 - **Rate Limiting**: 수집 API에 Rate Limiting이 적용되어 있지 않습니다. 운영 시 별도 구성이 필요합니다.
+- **SDK context 필드**: KMP SDK는 이벤트 context를 빈 객체로 전송합니다. Web SDK는 `browser_name`에 raw userAgent를 저장하며 `browser_version`/`os_version` 파싱이 미구현입니다.
+- **SDK 자동 이벤트**: `session_start`/`session_end` 자동 전송은 미구현입니다. `app_open`의 `is_first_open` 속성도 미포함입니다.
 - **SDK 세션 영속화**: iOS 플랫폼에서는 `NSUserDefaults` 기반으로 구현되어 있으며, 대용량 이벤트 큐에는 SQLDelight 마이그레이션이 권장됩니다.
-- **Identity Linking**: `external_user_id` 기반 사용자 식별만 지원합니다. 디바이스 간 anonymous ID 병합은 미구현입니다.
+- **Identity Linking**: `external_user_id` 기반 사용자 식별만 지원합니다. `identity_links` 테이블은 존재하나 코드에서 미사용이며, 디바이스 간 anonymous ID 병합은 미구현입니다.
+- **서버 검증**: 텍소노미 필수 속성 검증, schema_version별 검증, 500KB 페이로드 제한은 미구현입니다.
 
 ## 문서
 

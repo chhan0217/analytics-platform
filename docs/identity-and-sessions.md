@@ -48,10 +48,12 @@ SDK 초기화
 Analytics.identify("user_1024")
   → SDK: external_user_id를 메모리 + 영속 저장
   → 이후 이벤트에 anonymous_id + external_user_id 모두 포함
-  → 서버: identify 이벤트 수신
+  → 서버: external_user_id가 포함된 이벤트 수신
     → analytics_users에서 (project_id, external_user_id) 조회 또는 생성
-    → identity_links에 anonymous_id ↔ analytics_user_id 연결 기록
+    → 세션과 이벤트에 analytics_user_id 연결
 ```
+
+> **현재 구현 상태**: `external_user_id`가 포함된 모든 이벤트에서 `analytics_users` 레코드를 생성/연결한다. `identity_links` 테이블은 DB에 존재하지만 아직 코드에서 사용하지 않는다. 향후 anonymous_id ↔ analytics_user_id 연결 이력 추적이 필요할 때 구현한다.
 
 ### 3.3 로그아웃 (resetIdentity)
 
@@ -61,6 +63,8 @@ Analytics.resetIdentity()
   → 이후 이벤트에 anonymous_id만 포함
   → 익명 ID는 유지 (새로 생성하지 않음)
 ```
+
+> **현재 구현 상태**: `resetIdentity()`는 로컬 저장소에서 `external_user_id`를 제거만 한다. 로그아웃 이벤트 자동 전송은 하지 않는다.
 
 ### 3.4 계정 전환
 
@@ -81,9 +85,10 @@ Analytics.identify("user_B")
 ## 4. 소급 귀속 정책
 
 - **로그인 전 이벤트를 로그인 계정에 자동 소급 귀속하지 않는다.**
-- identity_links 테이블로 연결 관계만 기록하며, 과거 이벤트의 analytics_user_id를 변경하지 않는다.
+- 과거 이벤트의 analytics_user_id를 변경하지 않는다.
 - 명시적 병합 정책과 계정 전환 보호 장치가 완성된 후에만 소급 병합을 검토한다.
-- 대시보드에서는 identity_links를 통해 "이 익명 ID는 이 사용자와 연결됨"을 조회할 수 있다.
+
+> **현재 구현 상태**: `identity_links` 테이블은 DB에 존재하나 Exposed 테이블 정의 및 생성 로직은 미구현이다. 현재는 `analytics_users` + `analytics_sessions.analytics_user_id`로 사용자 ↔ 세션 연결을 관리한다.
 
 ## 5. 프로젝트 간 격리
 
@@ -103,7 +108,8 @@ Analytics.identify("user_B")
 
 - SDK 초기화 시 활성 세션이 없으면 새 세션 시작
 - 이전 세션이 타임아웃으로 만료되었으면 새 세션 시작
-- 새 세션 시작 시 `session_start` 이벤트 자동 전송
+
+> **현재 구현 상태**: 세션 생성 시 `session_start` 이벤트 자동 전송은 미구현이다. SDK는 세션 ID를 생성하고 영속화하지만, 별도 이벤트를 전송하지 않는다.
 
 ### 7.2 세션 유지
 
@@ -118,7 +124,8 @@ Analytics.identify("user_B")
 - `session_end` 전송은 best-effort:
   - 정상 종료: 앱이 포그라운드 복귀 시 타임아웃 감지 → session_end 전송
   - 강제 종료/크래시: session_end 미전송 가능
-  - 서버: `last_event_at` 기준으로 타임아웃 만료를 판정할 수 있어야 함
+
+> **현재 구현 상태**: 세션 타임아웃과 최대 지속 시간 판정은 **SDK 측에서만 수행**한다. 서버는 SDK가 보낸 `session_id`를 그대로 저장하고 `last_event_at`을 갱신한다. 서버 측 타임아웃 판정 및 `ended_at` 자동 설정은 향후 구현 예정이다.
 
 ### 7.4 세션 영속화 (업계 표준)
 
@@ -138,10 +145,10 @@ Analytics.identify("user_B")
 
 ### 7.5 세션 설정
 
-| 설정 | 기본값 | 설명 |
-|---|---|---|
-| `sessionTimeoutMs` | 1800000 (30분) | 비활동 타임아웃 |
-| `sessionMaxDurationMs` | 86400000 (24시간) | 세션 최대 지속 시간 |
+| 설정 | 기본값 | 설명 | 구현 상태 |
+|---|---|---|---|
+| `sessionTimeoutMs` | 1800000 (30분) | 비활동 타임아웃 | 구현 완료 (SDK 설정 가능) |
+| `sessionMaxDurationMs` | 86400000 (24시간) | 세션 최대 지속 시간 | 24시간 하드코딩. 설정 옵션은 향후 추가 |
 
 ## 8. 데이터 모델
 

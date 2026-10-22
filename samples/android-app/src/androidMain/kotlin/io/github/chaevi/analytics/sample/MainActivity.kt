@@ -42,7 +42,7 @@ class MainActivity : ComponentActivity() {
         Analytics.initialize(
             AnalyticsConfig(
                 apiKey = "ink_5992c0cec7840537bb6336f9419a4821b4a34e21ec450e274e3ef275f30ec8b4",
-                baseUrl = "http://172.168.10.59:8080",
+                baseUrl = "http://10.0.2.2:8080",
                 environment = "development",
                 appVersion = "0.1.0",
                 enableLogging = true,

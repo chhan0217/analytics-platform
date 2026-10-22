@@ -65,7 +65,34 @@
 
 ---
 
-## 2. Health
+## 2. 인증 API
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| `POST` | `/admin/auth/login` | 관리자 로그인 |
+
+### 요청
+```json
+{
+  "email": "admin@analytics.local",
+  "password": "admin1234"
+}
+```
+
+### 응답 (200)
+```json
+{
+  "data": {
+    "token": "<JWT 토큰>"
+  }
+}
+```
+
+> 로컬 개발 환경에서는 시드 관리자 계정(`admin@analytics.local` / `admin1234`)이 자동 생성된다.
+
+---
+
+## 3. Health
 
 | 메서드 | 경로 | 설명 |
 |---|---|---|
@@ -173,7 +200,7 @@
 |---|---|---|
 | `POST` | `/admin/projects/{projectId}/applications/{applicationId}/credentials` | 수집 키 발급 |
 | `GET` | `/admin/projects/{projectId}/applications/{applicationId}/credentials` | 수집 키 목록 |
-| `DELETE` | `/admin/projects/{projectId}/applications/{applicationId}/credentials/{credentialId}` | 수집 키 폐기 |
+| `DELETE` | `/admin/projects/{projectId}/applications/{applicationId}/credentials/{credentialId}` | 수집 키 폐기 (204 No Content) |
 
 ---
 
@@ -222,7 +249,6 @@
 | 메서드 | 경로 | 설명 |
 |---|---|---|
 | `GET` | `/admin/projects/{projectId}/users` | 사용자 검색 |
-| `GET` | `/admin/projects/{projectId}/users/{userId}` | 사용자 상세 |
 | `GET` | `/admin/projects/{projectId}/users/{userId}/sessions` | 사용자의 세션 목록 |
 | `GET` | `/admin/projects/{projectId}/sessions/{sessionId}/events` | 세션의 이벤트 타임라인 |
 
@@ -284,11 +310,7 @@
       { "step": 4, "event_key": "purchase_completed", "unique_users": 100, "unique_sessions": 110 }
     ],
     "overall_conversion_rate": 0.10,
-    "scope": "SESSION",
-    "period": {
-      "start_date": "2026-10-01T00:00:00Z",
-      "end_date": "2026-10-22T23:59:59Z"
-    }
+    "scope": "SESSION"
   }
 }
 ```

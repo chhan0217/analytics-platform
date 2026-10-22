@@ -151,7 +151,7 @@ Organization (조직)
 | id | UUID | PK | 프로젝트 ID |
 | organization_id | UUID | FK → organizations | 소속 조직 |
 | name | VARCHAR(256) | NOT NULL | 프로젝트명 |
-| unregistered_event_policy | VARCHAR(20) | NOT NULL, DEFAULT 'PERMISSIVE' | 미등록 이벤트 정책 (PERMISSIVE/STRICT/QUARANTINE) |
+| unregistered_event_policy | VARCHAR(20) | NOT NULL, DEFAULT 'PERMISSIVE' | 미등록 이벤트 정책 (PERMISSIVE/STRICT) |
 | created_at | TIMESTAMP | NOT NULL | 생성 시각 |
 
 ### 3.3 applications (앱)
@@ -255,6 +255,8 @@ Organization (조직)
 
 ### 3.11 identity_links (식별 연결)
 
+> **현재 구현 상태**: Flyway 마이그레이션으로 테이블은 생성되지만, Exposed 테이블 정의 및 생성 로직은 미구현이다. 현재는 `analytics_sessions.analytics_user_id`로 사용자 ↔ 세션 연결을 관리한다.
+
 | 컬럼 | 타입 | 제약 | 설명 |
 |---|---|---|---|
 | id | UUID | PK | 연결 ID |
@@ -303,6 +305,8 @@ Organization (조직)
 - `(project_id, event_key)` — 이벤트 종류별 조회
 
 ### 3.14 admin_audit_logs (감사 로그)
+
+> **현재 구현 상태**: Flyway 마이그레이션으로 테이블은 생성되지만, Exposed 테이블 정의 및 감사 로그 기록 로직은 미구현이다. 향후 관리자 액션 추적이 필요할 때 구현한다.
 
 | 컬럼 | 타입 | 제약 | 설명 |
 |---|---|---|---|

@@ -107,7 +107,7 @@ Organization (조직)
 |---|---|
 | Backend | Kotlin, Ktor, Gradle Kotlin DSL, kotlinx.serialization, Exposed, Flyway |
 | Database | PostgreSQL (JSONB, index), Docker Compose |
-| Web Dashboard | React, TypeScript, Vite, React Router, TanStack Query, Apache ECharts |
+| Web Dashboard | React, TypeScript, Vite, React Router, TanStack Query |
 | KMP SDK | Kotlin Multiplatform, Ktor Client, kotlinx.coroutines, kotlinx.serialization, SQLDelight |
 | Android 어댑터 | Jetpack Compose + Navigation 연동 |
 | Web SDK | TypeScript |
