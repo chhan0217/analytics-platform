@@ -190,6 +190,7 @@ Emulator에서 호스트 접근 주소는 `10.0.2.2`. Backend URL을 `http://10.
 ## 문서
 
 - [아키텍처](docs/architecture.md)
+- [데이터 모델 (ERD)](docs/data-model.md)
 - [이벤트 계약](docs/event-contract.md)
 - [사용자 식별 및 세션](docs/identity-and-sessions.md)
 - [텍소노미](docs/taxonomy.md)

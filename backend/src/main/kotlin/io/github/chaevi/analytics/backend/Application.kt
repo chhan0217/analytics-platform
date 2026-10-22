@@ -1,5 +1,7 @@
 package io.github.chaevi.analytics.backend
 
+import io.github.chaevi.analytics.backend.auth.AuthService
+import io.github.chaevi.analytics.backend.auth.JwtConfig.configureAuth
 import io.github.chaevi.analytics.backend.common.configureDatabase
 import io.github.chaevi.analytics.backend.common.configureRouting
 import io.github.chaevi.analytics.backend.common.configureSerialization
@@ -19,5 +21,7 @@ fun Application.module() {
     configureSerialization()
     configureStatusPages()
     configureDatabase()
+    configureAuth()
     configureRouting()
+    AuthService().seedDefaultAdmin()
 }
