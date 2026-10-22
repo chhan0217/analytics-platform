@@ -57,11 +57,5 @@ jobs:
           key: ${{ runner.os }}-gradle-backend-${{ hashFiles('**/*.gradle.kts', 'gradle/libs.versions.toml') }}
           restore-keys: ${{ runner.os }}-gradle-backend-
 
-      - name: 빌드
-        run: ./gradlew :backend:build
-
-      - name: ktlint 검사
-        run: ./gradlew :backend:ktlintCheck
-
-      - name: detekt 검사
-        run: ./gradlew :backend:detekt
+      - name: 빌드 + 테스트 + 코드 품질 (클린)
+        run: ./gradlew clean :backend:build
