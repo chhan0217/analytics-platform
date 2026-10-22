@@ -1,0 +1,17 @@
+{
+  "private": true,
+  "name": "analytics-platform",
+  "description": "범용 고객 행동 분석 플랫폼 — 루트 (husky + lint-staged 전용)",
+  "scripts": {
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^15.2.10"
+  },
+  "lint-staged": {
+    "*.{kt,kts}": [
+      "bash -c './gradlew ktlintFormat'"
+    ]
+  }
+}
