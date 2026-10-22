@@ -120,7 +120,11 @@ class IngestService(
                 val anonymousId = UUID.fromString(event.anonymousId)
 
                 ensureAnonymousIdentity(projectId, anonymousId, now)
-                ensureSession(projectId, applicationId, sessionId, anonymousId, occurredAt)
+                val analyticsUserId =
+                    event.externalUserId?.let {
+                        ensureAnalyticsUser(projectId, it, now)
+                    }
+                ensureSession(projectId, applicationId, sessionId, anonymousId, analyticsUserId, occurredAt)
                 updateSessionLastEvent(sessionId, occurredAt)
 
                 AnalyticsEventTable.insert {
@@ -129,6 +133,7 @@ class IngestService(
                     it[AnalyticsEventTable.applicationId] = applicationId
                     it[AnalyticsEventTable.sessionId] = sessionId
                     it[AnalyticsEventTable.anonymousId] = anonymousId
+                    it[AnalyticsEventTable.analyticsUserId] = analyticsUserId
                     it[AnalyticsEventTable.eventKey] = event.eventKey
                     it[eventSchemaVersion] = event.schemaVersion
                     it[properties] = event.properties.toString()
@@ -196,11 +201,40 @@ class IngestService(
         }
     }
 
+    private fun ensureAnalyticsUser(
+        projectId: UUID,
+        externalUserId: String,
+        now: Instant,
+    ): UUID {
+        val existing =
+            AnalyticsUserTable
+                .selectAll()
+                .where {
+                    (AnalyticsUserTable.projectId eq projectId) and
+                        (AnalyticsUserTable.externalUserId eq externalUserId)
+                }.firstOrNull()
+
+        if (existing != null) {
+            return existing[AnalyticsUserTable.id].value
+        }
+
+        val userId = UUID.randomUUID()
+        AnalyticsUserTable.insert {
+            it[AnalyticsUserTable.id] = userId
+            it[AnalyticsUserTable.projectId] = projectId
+            it[AnalyticsUserTable.externalUserId] = externalUserId
+            it[createdAt] = now
+            it[updatedAt] = now
+        }
+        return userId
+    }
+
     private fun ensureSession(
         projectId: UUID,
         applicationId: UUID,
         sessionId: UUID,
         anonymousId: UUID,
+        analyticsUserId: UUID?,
         occurredAt: Instant,
     ) {
         val exists =
@@ -215,6 +249,7 @@ class IngestService(
                 it[AnalyticsSessionTable.projectId] = projectId
                 it[AnalyticsSessionTable.applicationId] = applicationId
                 it[AnalyticsSessionTable.anonymousId] = anonymousId
+                it[AnalyticsSessionTable.analyticsUserId] = analyticsUserId
                 it[startedAt] = occurredAt
                 it[lastEventAt] = occurredAt
             }
