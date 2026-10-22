@@ -18,7 +18,16 @@ export default function Layout() {
 
   return (
     <div style={{ display: "flex", height: "100vh" }}>
-      <nav style={{ width: 220, background: "#1e1b4b", color: "#fff", padding: "1rem", display: "flex", flexDirection: "column" }}>
+      <nav
+        style={{
+          width: 220,
+          background: "#1e1b4b",
+          color: "#fff",
+          padding: "1rem",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
         <h3 style={{ marginBottom: "2rem", fontSize: 16 }}>Analytics Platform</h3>
         {navItems.map((item) => (
           <NavLink
@@ -39,7 +48,19 @@ export default function Layout() {
           </NavLink>
         ))}
         <div style={{ marginTop: "auto" }}>
-          <button onClick={handleLogout} style={{ background: "none", border: "1px solid rgba(255,255,255,0.3)", color: "#fff", padding: "0.5rem 0.75rem", borderRadius: 4, cursor: "pointer", width: "100%", fontSize: 14 }}>
+          <button
+            onClick={handleLogout}
+            style={{
+              background: "none",
+              border: "1px solid rgba(255,255,255,0.3)",
+              color: "#fff",
+              padding: "0.5rem 0.75rem",
+              borderRadius: 4,
+              cursor: "pointer",
+              width: "100%",
+              fontSize: 14,
+            }}
+          >
             로그아웃
           </button>
         </div>
