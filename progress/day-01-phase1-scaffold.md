@@ -87,12 +87,12 @@
   - [x] 빌드 / 코드 품질 명령
   - [x] 트러블슈팅 (PostgreSQL 충돌, 메모리, Docker, Emulator)
 
-- [ ] **Step 15.** CI (GitHub Actions)
-  - [ ] .github/workflows/ci-backend.yml
-  - [ ] .github/workflows/ci-sdk-kmp.yml
-  - [ ] .github/workflows/ci-web-dashboard.yml
-  - [ ] .github/workflows/ci-sdk-web.yml
-  - [ ] 전체 CI 통과 확인
+- [x] **Step 15.** CI (GitHub Actions)
+  - [x] .github/workflows/ci-backend.yml
+  - [x] .github/workflows/ci-sdk-kmp.yml
+  - [x] .github/workflows/ci-web-dashboard.yml
+  - [x] .github/workflows/ci-sdk-web.yml
+  - [x] 전체 CI 통과 확인 (PR #1에서 4개 모두 통과)
 
 ## 완료 조건
 - 모든 모듈이 독립적으로 빌드 성공

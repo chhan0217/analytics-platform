@@ -26,6 +26,8 @@ style:
     active: false
   UnusedPrivateMember:
     active: true
+  MayBeConst:
+    active: false
 
 naming:
   FunctionNaming:
