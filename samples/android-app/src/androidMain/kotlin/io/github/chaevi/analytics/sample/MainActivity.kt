@@ -37,6 +37,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        io.github.chaevi.analytics.sdk.data.local
+            .initAndroidStorage(applicationContext)
         Analytics.initialize(
             AnalyticsConfig(
                 apiKey = "ink_5992c0cec7840537bb6336f9419a4821b4a34e21ec450e274e3ef275f30ec8b4",
