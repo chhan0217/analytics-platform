@@ -28,10 +28,9 @@ export default function ApplicationsPage() {
     }
   };
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     void load();
-  }, [projectId]); // eslint-disable-line react-hooks/set-state-in-effect
+  }, [projectId]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();

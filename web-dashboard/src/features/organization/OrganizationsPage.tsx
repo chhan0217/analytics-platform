@@ -14,7 +14,7 @@ export default function OrganizationsPage() {
 
   useEffect(() => {
     void load();
-  }, []); // eslint-disable-line react-hooks/set-state-in-effect
+  }, []);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();

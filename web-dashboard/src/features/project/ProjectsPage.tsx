@@ -13,10 +13,9 @@ export default function ProjectsPage() {
     setProjects(res.data);
   };
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     void load();
-  }, [orgId]); // eslint-disable-line react-hooks/set-state-in-effect
+  }, [orgId]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();

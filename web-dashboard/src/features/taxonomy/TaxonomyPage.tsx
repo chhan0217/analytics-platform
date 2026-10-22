@@ -28,10 +28,9 @@ export default function TaxonomyPage() {
     setProperties(res.data);
   };
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     void loadEvents();
-  }, [projectId]); // eslint-disable-line react-hooks/set-state-in-effect
+  }, [projectId]);
 
   const handleCreateEvent = async (e: React.FormEvent) => {
     e.preventDefault();
