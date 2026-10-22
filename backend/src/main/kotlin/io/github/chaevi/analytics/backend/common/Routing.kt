@@ -9,6 +9,7 @@ import io.github.chaevi.analytics.backend.organization.organizationRoutes
 import io.github.chaevi.analytics.backend.project.projectRoutes
 import io.github.chaevi.analytics.backend.taxonomy.taxonomyEventRoutes
 import io.github.chaevi.analytics.backend.taxonomy.taxonomyPropertyRoutes
+import io.github.chaevi.analytics.backend.user.userQueryRoutes
 import io.ktor.server.application.Application
 import io.ktor.server.auth.authenticate
 import io.ktor.server.response.respond
@@ -61,6 +62,7 @@ fun Application.configureRouting() {
                 taxonomyEventRoutes()
                 taxonomyPropertyRoutes()
                 eventQueryRoutes()
+                userQueryRoutes()
             }
         }
     }

@@ -1,7 +1,7 @@
 import { initialize, track, trackScreen, identify, resetIdentity, flush } from "@chaevi/analytics-web-sdk";
 
 initialize({
-  apiKey: "REPLACE_WITH_INGESTION_KEY",
+  apiKey: "ink_b6dcfe3468c9e2797f9f132296de67ac3ca06c4ac498e678512073395def220d",
   baseUrl: "http://localhost:8080",
   environment: "development",
   appVersion: "0.1.0",
