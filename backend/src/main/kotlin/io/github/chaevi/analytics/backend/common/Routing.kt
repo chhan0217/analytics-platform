@@ -1,5 +1,6 @@
 package io.github.chaevi.analytics.backend.common
 
+import io.github.chaevi.analytics.backend.analytics.analyticsRoutes
 import io.github.chaevi.analytics.backend.application.applicationRoutes
 import io.github.chaevi.analytics.backend.auth.authRoutes
 import io.github.chaevi.analytics.backend.credential.credentialRoutes
@@ -63,6 +64,7 @@ fun Application.configureRouting() {
                 taxonomyPropertyRoutes()
                 eventQueryRoutes()
                 userQueryRoutes()
+                analyticsRoutes()
             }
         }
     }
