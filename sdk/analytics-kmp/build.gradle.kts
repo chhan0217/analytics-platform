@@ -2,7 +2,11 @@ plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.android.library)
+    `maven-publish`
 }
+
+group = "io.github.chaevi.analytics"
+version = "0.1.0"
 
 kotlin {
     androidTarget {
