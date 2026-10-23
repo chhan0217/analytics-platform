@@ -6,6 +6,12 @@ import kotlinx.datetime.Instant
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
+data class SessionTransition(
+    val previousSessionId: String,
+    val previousDurationMs: Long,
+    val newSessionId: String,
+)
+
 class SessionManager(
     private val storage: StorageRepository,
     private val sessionTimeoutMs: Long = 30 * 60 * 1000L,
@@ -19,8 +25,13 @@ class SessionManager(
 
     private var sequenceNumber = 0
 
+    /**
+     * 세션 ID를 반환한다.
+     * 세션이 만료되었으면 새 세션을 시작하고 [SessionTransition]을 반환한다.
+     * 기존 세션이 유효하면 null을 반환한다.
+     */
     @OptIn(ExperimentalUuidApi::class)
-    fun getOrCreateSessionId(): String {
+    fun getOrCreateSessionId(): Pair<String, SessionTransition?> {
         val now = Clock.System.now()
         val currentSessionId = storage.getString(KEY_SESSION_ID)
         val lastEventAt = storage.getString(KEY_LAST_EVENT_AT)?.let { Instant.parse(it) }
@@ -32,11 +43,33 @@ class SessionManager(
                 isMaxDurationExceeded(now, sessionStart)
 
         return if (shouldStartNew) {
-            startNewSession(now)
+            val transition =
+                if (currentSessionId != null && sessionStart != null) {
+                    val endTime = lastEventAt ?: sessionStart
+                    SessionTransition(
+                        previousSessionId = currentSessionId,
+                        previousDurationMs = (endTime - sessionStart).inWholeMilliseconds,
+                        newSessionId = "",
+                    )
+                } else {
+                    null
+                }
+
+            val newId = startNewSession(now)
+            val finalTransition = transition?.copy(newSessionId = newId)
+            Pair(newId, finalTransition)
         } else {
             storage.putString(KEY_LAST_EVENT_AT, now.toString())
-            currentSessionId!!
+            Pair(currentSessionId!!, null)
         }
+    }
+
+    fun getCurrentSessionId(): String? = storage.getString(KEY_SESSION_ID)
+
+    fun getSessionDurationMs(): Long {
+        val start = storage.getString(KEY_SESSION_START)?.let { Instant.parse(it) } ?: return 0
+        val lastEvent = storage.getString(KEY_LAST_EVENT_AT)?.let { Instant.parse(it) } ?: return 0
+        return (lastEvent - start).inWholeMilliseconds
     }
 
     fun getNextSequenceNumber(): Int = ++sequenceNumber

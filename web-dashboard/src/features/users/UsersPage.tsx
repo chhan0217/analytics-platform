@@ -140,26 +140,47 @@ export default function UsersPage() {
         <div style={{ display: "flex", gap: "1rem" }}>
           <div style={{ width: 300 }}>
             <h3>세션 목록</h3>
-            {sessions.map((s) => (
-              <div
-                key={s.id}
-                onClick={() => void handleSelectSession(s.id)}
-                style={{
-                  padding: "0.5rem",
-                  border: "1px solid #e5e7eb",
-                  borderRadius: 4,
-                  marginBottom: 4,
-                  cursor: "pointer",
-                  background: selectedSession === s.id ? "#e0e7ff" : "#fff",
-                  fontSize: 13,
-                }}
-              >
-                <div>
-                  <code>{s.id.slice(0, 8)}...</code>
+            {sessions.map((s) => {
+              const lastEvent = new Date(s.last_event_at).getTime();
+              const isExpired = !s.ended_at && Date.now() - lastEvent > 30 * 60 * 1000;
+              const status = s.ended_at ? "종료" : isExpired ? "종료 (추정)" : "활성";
+              const statusColor = s.ended_at ? "#6b7280" : isExpired ? "#f59e0b" : "#10b981";
+              const effectiveEndedAt = s.ended_at
+                ? new Date(s.ended_at).toLocaleString()
+                : isExpired
+                  ? new Date(lastEvent + 30 * 60 * 1000).toLocaleString()
+                  : "-";
+
+              return (
+                <div
+                  key={s.id}
+                  onClick={() => void handleSelectSession(s.id)}
+                  style={{
+                    padding: "0.5rem",
+                    border: "1px solid #e5e7eb",
+                    borderRadius: 4,
+                    marginBottom: 4,
+                    cursor: "pointer",
+                    background: selectedSession === s.id ? "#e0e7ff" : "#fff",
+                    fontSize: 13,
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <code>{s.id.slice(0, 8)}...</code>
+                    <span style={{ color: statusColor, fontWeight: 600 }}>{status}</span>
+                  </div>
+                  <div style={{ color: "#666", marginTop: 4 }}>
+                    시작: {new Date(s.started_at).toLocaleString()}
+                  </div>
+                  <div style={{ color: "#666" }}>
+                    마지막: {new Date(s.last_event_at).toLocaleString()}
+                  </div>
+                  <div style={{ color: "#666" }}>
+                    종료: {effectiveEndedAt}
+                  </div>
                 </div>
-                <div style={{ color: "#666" }}>{new Date(s.started_at).toLocaleString()}</div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {selectedSession && events.length > 0 && (
