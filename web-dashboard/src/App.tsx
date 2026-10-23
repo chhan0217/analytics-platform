@@ -1,9 +1,9 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { getAuthToken } from "./api/client";
+import { ProjectProvider } from "./context/ProjectContext";
 import Layout from "./components/Layout";
 import LoginPage from "./features/auth/LoginPage";
-import OrganizationsPage from "./features/organization/OrganizationsPage";
-import ProjectsPage from "./features/project/ProjectsPage";
+import OverviewPage from "./features/overview/OverviewPage";
 import ApplicationsPage from "./features/application/ApplicationsPage";
 import TaxonomyPage from "./features/taxonomy/TaxonomyPage";
 import EventsPage from "./features/events/EventsPage";
@@ -24,27 +24,21 @@ export default function App() {
         <Route
           element={
             <RequireAuth>
-              <Layout />
+              <ProjectProvider>
+                <Layout />
+              </ProjectProvider>
             </RequireAuth>
           }
         >
-          <Route path="/" element={<OrganizationsPage />} />
-          <Route path="/organizations/:orgId/projects" element={<ProjectsPage />} />
-          <Route path="/projects/:projectId/applications" element={<ApplicationsPage />} />
-          <Route path="/projects/:projectId/taxonomy" element={<TaxonomyPage />} />
-          <Route path="/projects/:projectId/events" element={<EventsPage />} />
-          <Route path="/projects/:projectId/analytics" element={<AnalyticsPage />} />
-          <Route
-            path="/events"
-            element={<div style={{ color: "#666" }}>프로젝트를 선택한 후 이벤트를 조회하세요.</div>}
-          />
-          <Route
-            path="/taxonomy"
-            element={
-              <div style={{ color: "#666" }}>프로젝트를 선택한 후 텍소노미를 관리하세요.</div>
-            }
-          />
+          <Route path="/" element={<Navigate to="/overview" replace />} />
+          <Route path="/overview" element={<OverviewPage />} />
+          <Route path="/events" element={<EventsPage />} />
+          <Route path="/screens" element={<AnalyticsPage tab="screens" />} />
+          <Route path="/funnels" element={<AnalyticsPage tab="funnels" />} />
+          <Route path="/journeys" element={<AnalyticsPage tab="journeys" />} />
           <Route path="/users" element={<UsersPage />} />
+          <Route path="/settings/apps" element={<ApplicationsPage />} />
+          <Route path="/settings/taxonomy" element={<TaxonomyPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

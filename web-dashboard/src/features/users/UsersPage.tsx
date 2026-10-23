@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { api } from "../../api/client";
+import { useProject } from "../../context/ProjectContext";
 import type { ListResponse } from "../../api/types";
 
 interface UserResult {
@@ -27,7 +28,8 @@ interface SessionEvent {
 }
 
 export default function UsersPage() {
-  const [projectId, setProjectId] = useState("");
+  const { selectedProject } = useProject();
+  const projectId = selectedProject?.id ?? "";
   const [searchType, setSearchType] = useState<"external" | "anonymous">("external");
   const [searchValue, setSearchValue] = useState("");
   const [users, setUsers] = useState<UserResult[]>([]);
@@ -70,12 +72,6 @@ export default function UsersPage() {
         onSubmit={handleSearch}
         style={{ display: "flex", gap: 8, marginBottom: "1.5rem", flexWrap: "wrap" }}
       >
-        <input
-          value={projectId}
-          onChange={(e) => setProjectId(e.target.value)}
-          placeholder="프로젝트 ID"
-          style={{ padding: 8, borderRadius: 4, border: "1px solid #ddd", width: 320 }}
-        />
         <select
           value={searchType}
           onChange={(e) => setSearchType(e.target.value as "external" | "anonymous")}

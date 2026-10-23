@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
 import { api } from "../../api/client";
+import { useProject } from "../../context/ProjectContext";
 import type { ListResponse, TaxonomyEvent, TaxonomyProperty, DataResponse } from "../../api/types";
 
 export default function TaxonomyPage() {
-  const { projectId } = useParams<{ projectId: string }>();
+  const { selectedProject } = useProject();
+  const projectId = selectedProject?.id;
   const [events, setEvents] = useState<TaxonomyEvent[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<TaxonomyEvent | null>(null);
   const [properties, setProperties] = useState<TaxonomyProperty[]>([]);

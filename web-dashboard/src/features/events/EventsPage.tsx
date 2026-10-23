@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { useParams } from "react-router-dom";
 import { api } from "../../api/client";
+import { useProject } from "../../context/ProjectContext";
 import type { CursorListResponse, AnalyticsEvent } from "../../api/types";
 
 export default function EventsPage() {
-  const { projectId } = useParams<{ projectId: string }>();
+  const { selectedProject } = useProject();
+  const projectId = selectedProject?.id;
   const [events, setEvents] = useState<AnalyticsEvent[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
