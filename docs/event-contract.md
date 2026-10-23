@@ -124,7 +124,7 @@ Content-Type: application/json
 | `button_click` | 버튼 클릭 | `button_id`, `screen_id` |
 | `identify` | 사용자 식별 | `external_user_id` |
 
-> **현재 구현 상태**: Web SDK는 `app_open`과 `identify`만 자동 전송한다. `session_start`/`session_end` 자동 전송은 향후 구현 예정이다. KMP SDK도 동일한 상태이다.
+> **현재 구현 상태**: KMP SDK는 `session_start`, `session_end`, `app_open`, `identify`를 자동 전송한다. Web SDK는 `app_open`과 `identify`만 자동 전송하며, `session_start`/`session_end`는 향후 구현 예정이다.
 
 ## 5. 커스텀 이벤트
 
@@ -164,8 +164,8 @@ Content-Type: application/json
 | `network_type` | string | Mobile | wifi, cellular, unknown |
 
 > **현재 구현 상태**:
+> - **KMP SDK**: `expect/actual`로 Android/iOS 플랫폼 context를 수집한다 (`os_name`, `os_version`, `device_model`, `device_manufacturer`, `locale`, `timezone`, `sdk_version`, `app_version`). `screen_width`/`screen_height`는 iOS만, `network_type`은 향후 구현.
 > - **Web SDK**: `browser_name`에 `navigator.userAgent` 원문을 저장한다. `browser_version`, `os_version` 파싱은 향후 구현 예정이다.
-> - **KMP SDK**: `EventContext` 모델은 정의되어 있으나 이벤트 전송 시 context에 포함하지 않는다 (빈 객체). 향후 플랫폼별 context 수집을 구현한다.
 
 ## 7. 제약 사항
 
