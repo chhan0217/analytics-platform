@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
 import { api } from "../../api/client";
+import { useProject } from "../../context/ProjectContext";
 import type {
   ListResponse,
   Application,
@@ -10,7 +10,8 @@ import type {
 } from "../../api/types";
 
 export default function ApplicationsPage() {
-  const { projectId } = useParams<{ projectId: string }>();
+  const { selectedProject } = useProject();
+  const projectId = selectedProject?.id;
   const [apps, setApps] = useState<Application[]>([]);
   const [name, setName] = useState("");
   const [platform, setPlatform] = useState("ANDROID");
