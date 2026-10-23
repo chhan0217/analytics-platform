@@ -109,7 +109,7 @@ Analytics.identify("user_B")
 - SDK 초기화 시 활성 세션이 없으면 새 세션 시작
 - 이전 세션이 타임아웃으로 만료되었으면 새 세션 시작
 
-> **현재 구현 상태**: 세션 생성 시 `session_start` 이벤트 자동 전송은 미구현이다. SDK는 세션 ID를 생성하고 영속화하지만, 별도 이벤트를 전송하지 않는다.
+> **KMP SDK**: 세션 생성 시 `session_start` 이벤트를 자동 전송한다. Web SDK는 향후 구현 예정.
 
 ### 7.2 세션 유지
 
@@ -125,7 +125,10 @@ Analytics.identify("user_B")
   - 정상 종료: 앱이 포그라운드 복귀 시 타임아웃 감지 → session_end 전송
   - 강제 종료/크래시: session_end 미전송 가능
 
-> **현재 구현 상태**: 세션 타임아웃과 최대 지속 시간 판정은 **SDK 측에서만 수행**한다. 서버는 SDK가 보낸 `session_id`를 그대로 저장하고 `last_event_at`을 갱신한다. 서버 측 타임아웃 판정 및 `ended_at` 자동 설정은 향후 구현 예정이다.
+> **현재 구현 상태**:
+> - **KMP SDK**: 세션 만료 감지 시 `session_end`(이전 세션, `duration_ms` 포함)를 전송하고 새 세션의 `session_start`를 전송한다. 백그라운드 진입 시에는 flush만 수행하고, 포그라운드 복귀 시 만료 여부를 판정한다 (업계 표준 패턴).
+> - **서버**: `session_end` 이벤트 수신 시 해당 세션의 `ended_at`을 업데이트한다. `session_end`가 오지 않은 경우 대시보드에서 `last_event_at + 30분`으로 종료를 추정한다.
+> - **Web SDK**: 세션 타임아웃 판정은 구현되어 있으나 `session_start`/`session_end` 이벤트 자동 전송은 향후 구현 예정이다.
 
 ### 7.4 세션 영속화 (업계 표준)
 
@@ -148,7 +151,7 @@ Analytics.identify("user_B")
 | 설정 | 기본값 | 설명 | 구현 상태 |
 |---|---|---|---|
 | `sessionTimeoutMs` | 1800000 (30분) | 비활동 타임아웃 | 구현 완료 (SDK 설정 가능) |
-| `sessionMaxDurationMs` | 86400000 (24시간) | 세션 최대 지속 시간 | 24시간 하드코딩. 설정 옵션은 향후 추가 |
+| `sessionMaxDurationMs` | 86400000 (24시간) | 세션 최대 지속 시간 | KMP SDK 구현 완료 (설정 가능). Web SDK는 24시간 하드코딩 |
 
 ## 8. 데이터 모델
 
