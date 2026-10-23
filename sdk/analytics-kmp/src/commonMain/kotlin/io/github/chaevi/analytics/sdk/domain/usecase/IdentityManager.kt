@@ -1,8 +1,7 @@
 package io.github.chaevi.analytics.sdk.domain.usecase
 
+import io.github.chaevi.analytics.sdk.data.local.randomUuid
 import io.github.chaevi.analytics.sdk.domain.repository.StorageRepository
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
 class IdentityManager(
     private val storage: StorageRepository,
@@ -12,12 +11,11 @@ class IdentityManager(
         private const val KEY_EXTERNAL_USER_ID = "analytics_external_user_id"
     }
 
-    @OptIn(ExperimentalUuidApi::class)
     fun getAnonymousId(): String {
         val existing = storage.getString(KEY_ANONYMOUS_ID)
         if (existing != null) return existing
 
-        val newId = Uuid.random().toString()
+        val newId = randomUuid()
         storage.putString(KEY_ANONYMOUS_ID, newId)
         return newId
     }

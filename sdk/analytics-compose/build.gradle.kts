@@ -27,6 +27,12 @@ kotlin {
     }
 }
 
+kotlin {
+    androidTarget {
+        publishLibraryVariants("release")
+    }
+}
+
 android {
     namespace = "io.github.chaevi.analytics.compose"
     compileSdk = 35

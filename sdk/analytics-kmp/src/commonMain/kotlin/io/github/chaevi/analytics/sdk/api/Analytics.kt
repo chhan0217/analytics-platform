@@ -3,6 +3,7 @@ package io.github.chaevi.analytics.sdk.api
 import io.github.chaevi.analytics.sdk.data.local.InMemoryEventQueue
 import io.github.chaevi.analytics.sdk.data.local.collectPlatformContext
 import io.github.chaevi.analytics.sdk.data.local.createPlatformStorage
+import io.github.chaevi.analytics.sdk.data.local.randomUuid
 import io.github.chaevi.analytics.sdk.data.remote.HttpEventSender
 import io.github.chaevi.analytics.sdk.domain.model.AnalyticsEvent
 import io.github.chaevi.analytics.sdk.domain.repository.EventQueueRepository
@@ -298,11 +299,7 @@ object Analytics {
         }
     }
 
-    @OptIn(kotlin.uuid.ExperimentalUuidApi::class)
-    private fun generateEventId(): String =
-        kotlin.uuid.Uuid
-            .random()
-            .toString()
+    private fun generateEventId(): String = randomUuid()
 
     private fun notifyError(
         code: String,

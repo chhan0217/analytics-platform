@@ -1,9 +1,9 @@
 [versions]
 # Kotlin
-kotlin = "2.1.0"
-kotlinx-coroutines = "1.9.0"
-kotlinx-serialization = "1.7.3"
-kotlinx-datetime = "0.6.1"
+kotlin = "2.0.0"
+kotlinx-coroutines = "1.8.1"
+kotlinx-serialization = "1.6.3"
+kotlinx-datetime = "0.6.0"
 
 # Backend
 ktor = "3.0.2"

@@ -1,10 +1,9 @@
 package io.github.chaevi.analytics.sdk.domain.usecase
 
+import io.github.chaevi.analytics.sdk.data.local.randomUuid
 import io.github.chaevi.analytics.sdk.domain.repository.StorageRepository
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
 data class SessionTransition(
     val previousSessionId: String,
@@ -30,7 +29,6 @@ class SessionManager(
      * 세션이 만료되었으면 새 세션을 시작하고 [SessionTransition]을 반환한다.
      * 기존 세션이 유효하면 null을 반환한다.
      */
-    @OptIn(ExperimentalUuidApi::class)
     fun getOrCreateSessionId(): Pair<String, SessionTransition?> {
         val now = Clock.System.now()
         val currentSessionId = storage.getString(KEY_SESSION_ID)
@@ -81,9 +79,8 @@ class SessionManager(
         return isTimedOut(now, lastEventAt) || isMaxDurationExceeded(now, sessionStart)
     }
 
-    @OptIn(ExperimentalUuidApi::class)
     private fun startNewSession(now: Instant): String {
-        val newSessionId = Uuid.random().toString()
+        val newSessionId = randomUuid()
         storage.putString(KEY_SESSION_ID, newSessionId)
         storage.putString(KEY_SESSION_START, now.toString())
         storage.putString(KEY_LAST_EVENT_AT, now.toString())

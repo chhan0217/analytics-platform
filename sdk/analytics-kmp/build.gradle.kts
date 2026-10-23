@@ -53,6 +53,12 @@ kotlin {
     }
 }
 
+kotlin {
+    androidTarget {
+        publishLibraryVariants("release")
+    }
+}
+
 android {
     namespace = "io.github.chaevi.analytics.sdk"
     compileSdk = 35
