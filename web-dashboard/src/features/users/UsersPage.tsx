@@ -175,9 +175,7 @@ export default function UsersPage() {
                   <div style={{ color: "#666" }}>
                     마지막: {new Date(s.last_event_at).toLocaleString()}
                   </div>
-                  <div style={{ color: "#666" }}>
-                    종료: {effectiveEndedAt}
-                  </div>
+                  <div style={{ color: "#666" }}>종료: {effectiveEndedAt}</div>
                 </div>
               );
             })}
