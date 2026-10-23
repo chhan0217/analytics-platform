@@ -11,6 +11,7 @@ import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.route
 import kotlinx.serialization.Serializable
+import org.jetbrains.exposed.sql.Op
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.or
@@ -104,11 +105,20 @@ fun Route.userQueryRoutes() {
 
             val sessions =
                 transaction {
+                    // anonymous_identities에서 실제 anonymous_id를 조회
+                    val anonId =
+                        AnonymousIdentityTable
+                            .selectAll()
+                            .where { AnonymousIdentityTable.id eq userUuid }
+                            .firstOrNull()
+                            ?.get(AnonymousIdentityTable.anonymousId)
+
                     AnalyticsSessionTable
                         .selectAll()
                         .where {
                             (AnalyticsSessionTable.analyticsUserId eq userUuid) or
-                                (AnalyticsSessionTable.anonymousId eq userUuid)
+                                (AnalyticsSessionTable.anonymousId eq userUuid) or
+                                (anonId?.let { AnalyticsSessionTable.anonymousId eq it } ?: Op.FALSE)
                         }.orderBy(AnalyticsSessionTable.startedAt, SortOrder.DESC)
                         .map {
                             SessionResponse(
