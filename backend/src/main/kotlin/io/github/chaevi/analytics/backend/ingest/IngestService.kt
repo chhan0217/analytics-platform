@@ -127,6 +127,10 @@ class IngestService(
                 ensureSession(projectId, applicationId, sessionId, anonymousId, analyticsUserId, occurredAt)
                 updateSessionLastEvent(sessionId, occurredAt)
 
+                if (event.eventKey == "session_end") {
+                    markSessionEnded(sessionId, occurredAt)
+                }
+
                 AnalyticsEventTable.insert {
                     it[AnalyticsEventTable.id] = eventId
                     it[AnalyticsEventTable.projectId] = projectId
@@ -253,6 +257,15 @@ class IngestService(
                 it[startedAt] = occurredAt
                 it[lastEventAt] = occurredAt
             }
+        }
+    }
+
+    private fun markSessionEnded(
+        sessionId: UUID,
+        occurredAt: Instant,
+    ) {
+        AnalyticsSessionTable.update({ AnalyticsSessionTable.id eq sessionId }) {
+            it[endedAt] = occurredAt
         }
     }
 
