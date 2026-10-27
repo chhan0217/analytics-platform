@@ -59,9 +59,9 @@ export default function EventSummaryPage() {
       );
       const taxEvent = taxRes.data.find((e) => e.event_key === eventKey);
       if (taxEvent) {
-        const detailRes = await api<DataResponse<TaxonomyEvent & { properties: TaxonomyProperty[] }>>(
-          `/admin/projects/${projectId}/taxonomy/events/${taxEvent.id}`,
-        );
+        const detailRes = await api<
+          DataResponse<TaxonomyEvent & { properties: TaxonomyProperty[] }>
+        >(`/admin/projects/${projectId}/taxonomy/events/${taxEvent.id}`);
         const props = detailRes.data.properties?.map((p) => p.property_key) || [];
         setPropertyKeys(props);
         if (props.length > 0) {
@@ -159,8 +159,7 @@ export default function EventSummaryPage() {
                     style={{
                       borderBottom: "1px solid #f3f4f6",
                       cursor: "pointer",
-                      background:
-                        selectedEventKey === evt.event_key ? "#e0e7ff" : "transparent",
+                      background: selectedEventKey === evt.event_key ? "#e0e7ff" : "transparent",
                     }}
                   >
                     <td style={{ padding: 8 }}>

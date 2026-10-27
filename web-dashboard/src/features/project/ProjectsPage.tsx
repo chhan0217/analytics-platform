@@ -10,9 +10,7 @@ export default function ProjectsPage() {
 
   const load = async () => {
     if (!selectedOrg) return;
-    const res = await api<ListResponse<Project>>(
-      `/admin/organizations/${selectedOrg.id}/projects`,
-    );
+    const res = await api<ListResponse<Project>>(`/admin/organizations/${selectedOrg.id}/projects`);
     setProjects(res.data);
   };
 
