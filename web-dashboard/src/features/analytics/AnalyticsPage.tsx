@@ -7,6 +7,7 @@ interface ScreenEntry {
   screen_id: string;
   view_count: number;
   unique_users: number;
+  avg_duration_ms: number | null;
 }
 
 interface TransitionEntry {
@@ -26,6 +27,17 @@ interface FunnelStep {
 interface FunnelResponse {
   steps: FunnelStep[];
   overall_conversion_rate: number;
+}
+
+function formatDuration(ms: number): string {
+  const seconds = Math.floor(ms / 1000);
+  if (seconds < 60) return `${seconds}초`;
+  const minutes = Math.floor(seconds / 60);
+  const remainSec = seconds % 60;
+  if (minutes < 60) return `${minutes}분 ${remainSec}초`;
+  const hours = Math.floor(minutes / 60);
+  const remainMin = minutes % 60;
+  return `${hours}시간 ${remainMin}분`;
 }
 
 export default function AnalyticsPage({ tab }: { tab: "screens" | "funnels" | "journeys" }) {
@@ -116,6 +128,7 @@ export default function AnalyticsPage({ tab }: { tab: "screens" | "funnels" | "j
                 <th style={{ padding: 8 }}>화면</th>
                 <th style={{ padding: 8 }}>방문 수</th>
                 <th style={{ padding: 8 }}>고유 사용자</th>
+                <th style={{ padding: 8 }}>평균 체류시간</th>
               </tr>
             </thead>
             <tbody>
@@ -126,6 +139,9 @@ export default function AnalyticsPage({ tab }: { tab: "screens" | "funnels" | "j
                   </td>
                   <td style={{ padding: 8 }}>{s.view_count}</td>
                   <td style={{ padding: 8 }}>{s.unique_users}</td>
+                  <td style={{ padding: 8, color: s.avg_duration_ms ? "#111" : "#ccc" }}>
+                    {s.avg_duration_ms ? formatDuration(s.avg_duration_ms) : "-"}
+                  </td>
                 </tr>
               ))}
             </tbody>

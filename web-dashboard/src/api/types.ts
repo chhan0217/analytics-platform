@@ -86,6 +86,32 @@ export interface TaxonomyProperty {
   description: string | null;
 }
 
+// 이벤트 집계
+export interface EventSummaryResponse {
+  events: EventSummaryEntry[];
+  period: { start_date: string; end_date: string };
+}
+
+export interface EventSummaryEntry {
+  event_key: string;
+  count: number;
+  unique_users: number;
+  unique_sessions: number;
+}
+
+export interface EventBreakdownResponse {
+  event_key: string;
+  property_key: string;
+  breakdown: BreakdownEntry[];
+  period: { start_date: string; end_date: string };
+}
+
+export interface BreakdownEntry {
+  value: string;
+  count: number;
+  unique_users: number;
+}
+
 // 이벤트
 export interface AnalyticsEvent {
   id: string;

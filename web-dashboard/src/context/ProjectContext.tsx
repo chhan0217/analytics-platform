@@ -10,6 +10,7 @@ interface ProjectContextType {
   selectedProject: Project | null;
   selectOrg: (org: Organization) => void;
   selectProject: (project: Project) => void;
+  reloadOrgs: () => Promise<void>;
   loading: boolean;
 }
 
@@ -22,17 +23,18 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    api<ListResponse<Organization>>("/admin/organizations")
-      .then((res) => {
-        setOrganizations(res.data);
-        const savedOrgId = localStorage.getItem("selected_org_id");
-        const saved = res.data.find((o) => o.id === savedOrgId);
-        if (saved) setSelectedOrg(saved);
-        else if (res.data.length === 1) setSelectedOrg(res.data[0]);
-      })
-      .finally(() => setLoading(false));
+  const loadOrgs = useCallback(async () => {
+    const res = await api<ListResponse<Organization>>("/admin/organizations");
+    setOrganizations(res.data);
+    const savedOrgId = localStorage.getItem("selected_org_id");
+    const saved = res.data.find((o) => o.id === savedOrgId);
+    if (saved) setSelectedOrg(saved);
+    else if (res.data.length === 1) setSelectedOrg(res.data[0]);
   }, []);
+
+  useEffect(() => {
+    loadOrgs().finally(() => setLoading(false));
+  }, [loadOrgs]);
 
   useEffect(() => {
     if (!selectedOrg) {
@@ -69,6 +71,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
         selectedProject,
         selectOrg,
         selectProject,
+        reloadOrgs: loadOrgs,
         loading,
       }}
     >

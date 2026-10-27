@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import { api } from "../../api/client";
+import { useProject } from "../../context/ProjectContext";
 import type { ListResponse, Organization, DataResponse } from "../../api/types";
 
 export default function OrganizationsPage() {
   const [orgs, setOrgs] = useState<Organization[]>([]);
   const [name, setName] = useState("");
+  const { selectedOrg, selectOrg, reloadOrgs } = useProject();
 
   const load = async () => {
     const res = await api<ListResponse<Organization>>("/admin/organizations");
@@ -19,17 +20,19 @@ export default function OrganizationsPage() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
-    await api<DataResponse<Organization>>("/admin/organizations", {
+    const res = await api<DataResponse<Organization>>("/admin/organizations", {
       method: "POST",
       body: JSON.stringify({ name }),
     });
     setName("");
     await load();
+    await reloadOrgs();
+    selectOrg(res.data);
   };
 
   return (
     <div>
-      <h2>조직 관리</h2>
+      <h2 style={{ marginTop: 0 }}>조직 관리</h2>
       <form onSubmit={handleCreate} style={{ display: "flex", gap: 8, marginBottom: "1.5rem" }}>
         <input
           value={name}
@@ -56,7 +59,7 @@ export default function OrganizationsPage() {
           <tr style={{ borderBottom: "2px solid #e5e7eb", textAlign: "left" }}>
             <th style={{ padding: 8 }}>이름</th>
             <th style={{ padding: 8 }}>생성일</th>
-            <th style={{ padding: 8 }}>프로젝트</th>
+            <th style={{ padding: 8 }}>작업</th>
           </tr>
         </thead>
         <tbody>
@@ -67,9 +70,34 @@ export default function OrganizationsPage() {
                 {new Date(org.created_at).toLocaleString()}
               </td>
               <td style={{ padding: 8 }}>
-                <Link to={`/organizations/${org.id}/projects`} style={{ color: "#4f46e5" }}>
-                  프로젝트 보기
-                </Link>
+                {selectedOrg?.id === org.id ? (
+                  <span
+                    style={{
+                      background: "#4f46e5",
+                      color: "#fff",
+                      padding: "4px 12px",
+                      borderRadius: 4,
+                      fontSize: 13,
+                    }}
+                  >
+                    선택됨
+                  </span>
+                ) : (
+                  <button
+                    onClick={() => selectOrg(org)}
+                    style={{
+                      background: "none",
+                      border: "1px solid #4f46e5",
+                      color: "#4f46e5",
+                      padding: "4px 12px",
+                      borderRadius: 4,
+                      cursor: "pointer",
+                      fontSize: 13,
+                    }}
+                  >
+                    선택
+                  </button>
+                )}
               </td>
             </tr>
           ))}

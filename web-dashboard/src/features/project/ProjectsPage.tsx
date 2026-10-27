@@ -1,36 +1,57 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
 import { api } from "../../api/client";
+import { useProject } from "../../context/ProjectContext";
 import type { ListResponse, Project, DataResponse } from "../../api/types";
 
 export default function ProjectsPage() {
-  const { orgId } = useParams<{ orgId: string }>();
+  const { selectedOrg, selectedProject, selectProject, reloadOrgs } = useProject();
   const [projects, setProjects] = useState<Project[]>([]);
   const [name, setName] = useState("");
 
   const load = async () => {
-    const res = await api<ListResponse<Project>>(`/admin/organizations/${orgId}/projects`);
+    if (!selectedOrg) return;
+    const res = await api<ListResponse<Project>>(
+      `/admin/organizations/${selectedOrg.id}/projects`,
+    );
     setProjects(res.data);
   };
 
   useEffect(() => {
     void load();
-  }, [orgId]);
+  }, [selectedOrg?.id]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
-    await api<DataResponse<Project>>(`/admin/organizations/${orgId}/projects`, {
-      method: "POST",
-      body: JSON.stringify({ name }),
-    });
+    if (!name.trim() || !selectedOrg) return;
+    const res = await api<DataResponse<Project>>(
+      `/admin/organizations/${selectedOrg.id}/projects`,
+      {
+        method: "POST",
+        body: JSON.stringify({ name }),
+      },
+    );
     setName("");
     await load();
+    await reloadOrgs();
+    selectProject(res.data);
   };
+
+  if (!selectedOrg) {
+    return (
+      <div style={{ color: "#9ca3af", textAlign: "center", marginTop: "3rem" }}>
+        먼저 상단에서 조직을 선택하세요.
+      </div>
+    );
+  }
 
   return (
     <div>
-      <h2>프로젝트 관리</h2>
+      <h2 style={{ marginTop: 0 }}>
+        프로젝트 관리
+        <span style={{ fontSize: 14, color: "#6b7280", fontWeight: 400, marginLeft: 8 }}>
+          ({selectedOrg.name})
+        </span>
+      </h2>
       <form onSubmit={handleCreate} style={{ display: "flex", gap: 8, marginBottom: "1.5rem" }}>
         <input
           value={name}
@@ -58,7 +79,7 @@ export default function ProjectsPage() {
             <th style={{ padding: 8 }}>이름</th>
             <th style={{ padding: 8 }}>이벤트 정책</th>
             <th style={{ padding: 8 }}>생성일</th>
-            <th style={{ padding: 8 }}>관리</th>
+            <th style={{ padding: 8 }}>작업</th>
           </tr>
         </thead>
         <tbody>
@@ -80,22 +101,35 @@ export default function ProjectsPage() {
               <td style={{ padding: 8, fontSize: 13, color: "#666" }}>
                 {new Date(p.created_at).toLocaleString()}
               </td>
-              <td style={{ padding: 8, display: "flex", gap: 8 }}>
-                <Link
-                  to={`/projects/${p.id}/applications`}
-                  style={{ color: "#4f46e5", fontSize: 13 }}
-                >
-                  앱
-                </Link>
-                <Link to={`/projects/${p.id}/taxonomy`} style={{ color: "#4f46e5", fontSize: 13 }}>
-                  텍소노미
-                </Link>
-                <Link to={`/projects/${p.id}/events`} style={{ color: "#4f46e5", fontSize: 13 }}>
-                  이벤트
-                </Link>
-                <Link to={`/projects/${p.id}/analytics`} style={{ color: "#4f46e5", fontSize: 13 }}>
-                  분석
-                </Link>
+              <td style={{ padding: 8 }}>
+                {selectedProject?.id === p.id ? (
+                  <span
+                    style={{
+                      background: "#4f46e5",
+                      color: "#fff",
+                      padding: "4px 12px",
+                      borderRadius: 4,
+                      fontSize: 13,
+                    }}
+                  >
+                    선택됨
+                  </span>
+                ) : (
+                  <button
+                    onClick={() => selectProject(p)}
+                    style={{
+                      background: "none",
+                      border: "1px solid #4f46e5",
+                      color: "#4f46e5",
+                      padding: "4px 12px",
+                      borderRadius: 4,
+                      cursor: "pointer",
+                      fontSize: 13,
+                    }}
+                  >
+                    선택
+                  </button>
+                )}
               </td>
             </tr>
           ))}

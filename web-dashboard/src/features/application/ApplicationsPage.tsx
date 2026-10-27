@@ -201,7 +201,22 @@ export default function ApplicationsPage() {
                     <td style={{ padding: 4, color: "#666" }}>
                       {new Date(c.created_at).toLocaleString()}
                     </td>
-                    <td style={{ padding: 4 }}>
+                    <td style={{ padding: 4, display: "flex", gap: 8 }}>
+                      <button
+                        onClick={() => {
+                          void navigator.clipboard.writeText(c.key_prefix + "...");
+                          alert("Prefix가 복사되었습니다 (전체 키는 발급 시에만 확인 가능)");
+                        }}
+                        style={{
+                          color: "#4f46e5",
+                          background: "none",
+                          border: "none",
+                          cursor: "pointer",
+                          fontSize: 12,
+                        }}
+                      >
+                        복사
+                      </button>
                       {c.status === "ACTIVE" && (
                         <button
                           onClick={() => void handleRevokeKey(app.id, c.id)}
