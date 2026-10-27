@@ -24,6 +24,11 @@ kotlin {
             implementation(libs.compose.navigation)
             implementation(libs.activity.compose)
         }
+        val androidUnitTest by getting {
+            dependencies {
+                implementation(kotlin("test"))
+            }
+        }
     }
 }
 

@@ -66,30 +66,51 @@ class AnalyticsService {
         val projUuid = UUID.fromString(projectId)
 
         return transaction {
-            var condition: Op<Boolean> =
+            var viewCondition: Op<Boolean> =
                 (AnalyticsEventTable.projectId eq projUuid) and
                     (AnalyticsEventTable.eventKey eq "screen_view") and
                     (AnalyticsEventTable.occurredAt greaterEq start) and
                     (AnalyticsEventTable.occurredAt lessEq end)
 
+            var leaveCondition: Op<Boolean> =
+                (AnalyticsEventTable.projectId eq projUuid) and
+                    (AnalyticsEventTable.eventKey eq "screen_leave") and
+                    (AnalyticsEventTable.occurredAt greaterEq start) and
+                    (AnalyticsEventTable.occurredAt lessEq end)
+
             applicationId?.let {
-                condition = condition and (AnalyticsEventTable.applicationId eq UUID.fromString(it))
+                val appUuid = UUID.fromString(it)
+                viewCondition = viewCondition and (AnalyticsEventTable.applicationId eq appUuid)
+                leaveCondition = leaveCondition and (AnalyticsEventTable.applicationId eq appUuid)
             }
 
-            val rows =
+            val viewRows =
                 AnalyticsEventTable
                     .selectAll()
-                    .where { condition }
+                    .where { viewCondition }
                     .map {
                         val props = it[AnalyticsEventTable.properties]
                         val screenId = extractJsonField(props, "screen_id") ?: "unknown"
                         Pair(screenId, it[AnalyticsEventTable.anonymousId].toString())
                     }
 
-            val grouped = rows.groupBy { it.first }
+            val durationByScreen = mutableMapOf<String, MutableList<Long>>()
+            AnalyticsEventTable
+                .selectAll()
+                .where { leaveCondition }
+                .forEach {
+                    val props = it[AnalyticsEventTable.properties]
+                    val screenId = extractJsonField(props, "screen_id") ?: return@forEach
+                    val duration = extractJsonField(props, "duration_ms")?.toLongOrNull() ?: return@forEach
+                    durationByScreen.getOrPut(screenId) { mutableListOf() }.add(duration)
+                }
+
+            val grouped = viewRows.groupBy { it.first }
             val screens =
                 grouped
                     .map { (screenId, entries) ->
+                        val durations = durationByScreen[screenId]
+                        val avgDuration = durations?.let { it.sum() / it.size }
                         ScreenEntry(
                             screenId = screenId,
                             viewCount = entries.size.toLong(),
@@ -99,6 +120,7 @@ class AnalyticsService {
                                     .toSet()
                                     .size
                                     .toLong(),
+                            avgDurationMs = avgDuration,
                         )
                     }.sortedByDescending { it.viewCount }
 
@@ -259,12 +281,136 @@ class AnalyticsService {
         }
     }
 
+    fun eventSummary(
+        projectId: String,
+        start: Instant,
+        end: Instant,
+        applicationId: String?,
+    ): EventSummaryResponse {
+        val projUuid = UUID.fromString(projectId)
+
+        return transaction {
+            var condition: Op<Boolean> =
+                (AnalyticsEventTable.projectId eq projUuid) and
+                    (AnalyticsEventTable.occurredAt greaterEq start) and
+                    (AnalyticsEventTable.occurredAt lessEq end)
+
+            applicationId?.let {
+                condition = condition and (AnalyticsEventTable.applicationId eq UUID.fromString(it))
+            }
+
+            val rows =
+                AnalyticsEventTable
+                    .selectAll()
+                    .where { condition }
+                    .map {
+                        Triple(
+                            it[AnalyticsEventTable.eventKey],
+                            it[AnalyticsEventTable.anonymousId].toString(),
+                            it[AnalyticsEventTable.sessionId].toString(),
+                        )
+                    }
+
+            val grouped = rows.groupBy { it.first }
+            val events =
+                grouped
+                    .map { (eventKey, entries) ->
+                        EventSummaryEntry(
+                            eventKey = eventKey,
+                            count = entries.size.toLong(),
+                            uniqueUsers =
+                                entries
+                                    .map { it.second }
+                                    .toSet()
+                                    .size
+                                    .toLong(),
+                            uniqueSessions =
+                                entries
+                                    .map { it.third }
+                                    .toSet()
+                                    .size
+                                    .toLong(),
+                        )
+                    }.sortedByDescending { it.count }
+
+            EventSummaryResponse(
+                events = events,
+                period = PeriodInfo(start.toString(), end.toString()),
+            )
+        }
+    }
+
+    fun eventBreakdown(
+        projectId: String,
+        start: Instant,
+        end: Instant,
+        eventKey: String,
+        propertyKey: String,
+        applicationId: String?,
+    ): EventBreakdownResponse {
+        val projUuid = UUID.fromString(projectId)
+
+        return transaction {
+            var condition: Op<Boolean> =
+                (AnalyticsEventTable.projectId eq projUuid) and
+                    (AnalyticsEventTable.eventKey eq eventKey) and
+                    (AnalyticsEventTable.occurredAt greaterEq start) and
+                    (AnalyticsEventTable.occurredAt lessEq end)
+
+            applicationId?.let {
+                condition = condition and (AnalyticsEventTable.applicationId eq UUID.fromString(it))
+            }
+
+            val rows =
+                AnalyticsEventTable
+                    .selectAll()
+                    .where { condition }
+                    .mapNotNull {
+                        val value =
+                            extractJsonField(it[AnalyticsEventTable.properties], propertyKey)
+                                ?: return@mapNotNull null
+                        Pair(value, it[AnalyticsEventTable.anonymousId].toString())
+                    }
+
+            val grouped = rows.groupBy { it.first }
+            val breakdown =
+                grouped
+                    .map { (value, entries) ->
+                        BreakdownEntry(
+                            value = value,
+                            count = entries.size.toLong(),
+                            uniqueUsers =
+                                entries
+                                    .map { it.second }
+                                    .toSet()
+                                    .size
+                                    .toLong(),
+                        )
+                    }.sortedByDescending { it.count }
+
+            EventBreakdownResponse(
+                eventKey = eventKey,
+                propertyKey = propertyKey,
+                breakdown = breakdown,
+                period = PeriodInfo(start.toString(), end.toString()),
+            )
+        }
+    }
+
     private fun extractJsonField(
         json: String,
         field: String,
     ): String? {
-        val regex = """"$field"\s*:\s*"([^"]+)"""".toRegex()
-        return regex.find(json)?.groupValues?.get(1)
+        // 문자열 값: "field": "value"
+        val stringRegex = """"$field"\s*:\s*"([^"]+)"""".toRegex()
+        stringRegex
+            .find(json)
+            ?.groupValues
+            ?.get(1)
+            ?.let { return it }
+        // 숫자/불리언 값: "field": 123 또는 "field": true
+        val nonStringRegex = """"$field"\s*:\s*([^",}\s]+)""".toRegex()
+        return nonStringRegex.find(json)?.groupValues?.get(1)
     }
 
     private fun matchesFilter(

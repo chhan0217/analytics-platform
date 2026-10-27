@@ -1,10 +1,13 @@
+import { useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { setAuthToken } from "../api/client";
+import { api, setAuthToken } from "../api/client";
 import { useProject } from "../context/ProjectContext";
+import type { DataResponse, Organization, Project } from "../api/types";
 
 const analysisItems = [
   { to: "/overview", label: "개요" },
   { to: "/events", label: "이벤트" },
+  { to: "/events/summary", label: "이벤트 집계" },
   { to: "/screens", label: "화면 분석" },
   { to: "/funnels", label: "퍼널" },
   { to: "/journeys", label: "여정" },
@@ -12,6 +15,8 @@ const analysisItems = [
 ];
 
 const settingsItems = [
+  { to: "/settings/organizations", label: "조직 관리" },
+  { to: "/settings/projects", label: "프로젝트 관리" },
   { to: "/settings/apps", label: "앱 관리" },
   { to: "/settings/taxonomy", label: "텍소노미" },
 ];
@@ -29,10 +34,99 @@ function navStyle({ isActive }: { isActive: boolean }) {
   };
 }
 
+function SetupCard({
+  title,
+  placeholder,
+  onSubmit,
+}: {
+  title: string;
+  placeholder: string;
+  onSubmit: (name: string) => Promise<void>;
+}) {
+  const [name, setName] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim() || submitting) return;
+    setSubmitting(true);
+    try {
+      await onSubmit(name.trim());
+      setName("");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        height: "100%",
+      }}
+    >
+      <div
+        style={{
+          background: "#fff",
+          borderRadius: 8,
+          padding: "2rem",
+          boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+          width: 400,
+          textAlign: "center",
+        }}
+      >
+        <h3 style={{ margin: "0 0 0.5rem", color: "#1e1b4b" }}>{title}</h3>
+        <p style={{ color: "#6b7280", fontSize: 14, marginBottom: "1.5rem" }}>
+          시작하려면 아래에서 생성하세요.
+        </p>
+        <form onSubmit={handleSubmit} style={{ display: "flex", gap: 8 }}>
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder={placeholder}
+            autoFocus
+            style={{
+              flex: 1,
+              padding: "8px 12px",
+              borderRadius: 4,
+              border: "1px solid #d1d5db",
+              fontSize: 14,
+            }}
+          />
+          <button
+            type="submit"
+            disabled={submitting}
+            style={{
+              padding: "8px 20px",
+              background: "#4f46e5",
+              color: "#fff",
+              border: "none",
+              borderRadius: 4,
+              cursor: "pointer",
+              fontSize: 14,
+            }}
+          >
+            생성
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export default function Layout() {
   const navigate = useNavigate();
-  const { organizations, projects, selectedOrg, selectedProject, selectOrg, selectProject } =
-    useProject();
+  const {
+    organizations,
+    projects,
+    selectedOrg,
+    selectedProject,
+    selectOrg,
+    selectProject,
+    reloadOrgs,
+  } = useProject();
 
   const handleLogout = () => {
     setAuthToken(null);
@@ -161,7 +255,35 @@ export default function Layout() {
 
         {/* 메인 콘텐츠 */}
         <main style={{ flex: 1, overflow: "auto", padding: "1.5rem", background: "#f9fafb" }}>
-          {!selectedProject ? (
+          {organizations.length === 0 ? (
+            <SetupCard
+              title="조직이 없습니다"
+              placeholder="조직 이름"
+              onSubmit={async (name) => {
+                await api<DataResponse<Organization>>("/admin/organizations", {
+                  method: "POST",
+                  body: JSON.stringify({ name }),
+                });
+                await reloadOrgs();
+              }}
+            />
+          ) : selectedOrg && projects.length === 0 ? (
+            <SetupCard
+              title="프로젝트가 없습니다"
+              placeholder="프로젝트 이름"
+              onSubmit={async (name) => {
+                const res = await api<DataResponse<Project>>(
+                  `/admin/organizations/${selectedOrg.id}/projects`,
+                  {
+                    method: "POST",
+                    body: JSON.stringify({ name }),
+                  },
+                );
+                await reloadOrgs();
+                selectProject(res.data);
+              }}
+            />
+          ) : !selectedProject ? (
             <div
               style={{
                 display: "flex",

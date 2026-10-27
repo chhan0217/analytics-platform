@@ -103,6 +103,17 @@ object Analytics {
         trackInternal("screen_view", merged)
     }
 
+    fun trackScreenLeave(
+        screenId: String,
+        durationMs: Long,
+    ) {
+        checkInitialized()
+        trackInternal(
+            "screen_leave",
+            mapOf("screen_id" to screenId, "duration_ms" to durationMs),
+        )
+    }
+
     fun identify(externalUserId: String) {
         checkInitialized()
         identityManager.identify(externalUserId)

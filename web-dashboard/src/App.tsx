@@ -7,8 +7,11 @@ import OverviewPage from "./features/overview/OverviewPage";
 import ApplicationsPage from "./features/application/ApplicationsPage";
 import TaxonomyPage from "./features/taxonomy/TaxonomyPage";
 import EventsPage from "./features/events/EventsPage";
+import EventSummaryPage from "./features/events/EventSummaryPage";
 import UsersPage from "./features/users/UsersPage";
 import AnalyticsPage from "./features/analytics/AnalyticsPage";
+import OrganizationsPage from "./features/organization/OrganizationsPage";
+import ProjectsPage from "./features/project/ProjectsPage";
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const token = getAuthToken();
@@ -33,10 +36,13 @@ export default function App() {
           <Route path="/" element={<Navigate to="/overview" replace />} />
           <Route path="/overview" element={<OverviewPage />} />
           <Route path="/events" element={<EventsPage />} />
+          <Route path="/events/summary" element={<EventSummaryPage />} />
           <Route path="/screens" element={<AnalyticsPage tab="screens" />} />
           <Route path="/funnels" element={<AnalyticsPage tab="funnels" />} />
           <Route path="/journeys" element={<AnalyticsPage tab="journeys" />} />
           <Route path="/users" element={<UsersPage />} />
+          <Route path="/settings/organizations" element={<OrganizationsPage />} />
+          <Route path="/settings/projects" element={<ProjectsPage />} />
           <Route path="/settings/apps" element={<ApplicationsPage />} />
           <Route path="/settings/taxonomy" element={<TaxonomyPage />} />
         </Route>

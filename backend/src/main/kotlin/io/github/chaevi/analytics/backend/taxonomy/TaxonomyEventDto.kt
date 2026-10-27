@@ -27,4 +27,5 @@ data class TaxonomyEventResponse(
     val status: String,
     val isSystem: Boolean,
     val createdAt: String,
+    val properties: List<TaxonomyPropertyResponse>? = null,
 )

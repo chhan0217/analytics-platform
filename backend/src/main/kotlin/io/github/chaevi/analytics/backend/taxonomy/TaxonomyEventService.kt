@@ -9,6 +9,7 @@ import java.util.UUID
 class TaxonomyEventService(
     private val repository: TaxonomyEventRepository = TaxonomyEventRepository(),
     private val projectRepository: ProjectRepository = ProjectRepository(),
+    private val propertyRepository: TaxonomyPropertyRepository = TaxonomyPropertyRepository(),
 ) {
     private val eventKeyPattern = Regex("^[a-z][a-z0-9_]{0,127}$")
 
@@ -63,8 +64,13 @@ class TaxonomyEventService(
         eventId: String,
     ): TaxonomyEventResponse {
         val eventUuid = parseUuid(eventId)
-        return transaction { repository.findById(eventUuid) }
-            ?: throw ApiException("NOT_FOUND", HttpStatusCode.NotFound, "이벤트를 찾을 수 없습니다: $eventId")
+        return transaction {
+            val event =
+                repository.findById(eventUuid)
+                    ?: throw ApiException("NOT_FOUND", HttpStatusCode.NotFound, "이벤트를 찾을 수 없습니다: $eventId")
+            val properties = propertyRepository.findAllByEvent(eventUuid)
+            event.copy(properties = properties)
+        }
     }
 
     @Suppress("ThrowsCount")
