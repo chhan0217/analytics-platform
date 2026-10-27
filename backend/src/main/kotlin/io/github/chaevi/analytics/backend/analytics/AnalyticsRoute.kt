@@ -79,5 +79,12 @@ private fun parseDateRange(call: io.ktor.server.routing.RoutingCall): Pair<Insta
     val endDate =
         call.request.queryParameters["end_date"]
             ?: throw ApiException("VALIDATION_ERROR", HttpStatusCode.BadRequest, "end_date는 필수입니다")
-    return Pair(Instant.parse(startDate), Instant.parse(endDate))
+    return Pair(parseInstant(startDate), parseInstant(endDate))
 }
+
+private fun parseInstant(value: String): Instant =
+    if (value.contains("T")) {
+        Instant.parse(value)
+    } else {
+        Instant.parse("${value}T00:00:00Z")
+    }
