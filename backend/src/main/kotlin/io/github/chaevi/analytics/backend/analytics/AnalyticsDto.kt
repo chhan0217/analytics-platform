@@ -26,6 +26,7 @@ data class ScreenEntry(
     val screenId: String,
     val viewCount: Long,
     val uniqueUsers: Long,
+    val avgDurationMs: Long? = null,
 )
 
 @Serializable
@@ -69,4 +70,33 @@ data class FunnelStepResult(
     val uniqueUsers: Long,
     val uniqueSessions: Long,
     val conversionRate: Double,
+)
+
+@Serializable
+data class EventSummaryResponse(
+    val events: List<EventSummaryEntry>,
+    val period: PeriodInfo,
+)
+
+@Serializable
+data class EventSummaryEntry(
+    val eventKey: String,
+    val count: Long,
+    val uniqueUsers: Long,
+    val uniqueSessions: Long,
+)
+
+@Serializable
+data class EventBreakdownResponse(
+    val eventKey: String,
+    val propertyKey: String,
+    val breakdown: List<BreakdownEntry>,
+    val period: PeriodInfo,
+)
+
+@Serializable
+data class BreakdownEntry(
+    val value: String,
+    val count: Long,
+    val uniqueUsers: Long,
 )

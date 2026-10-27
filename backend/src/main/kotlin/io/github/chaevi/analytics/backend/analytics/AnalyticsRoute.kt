@@ -14,7 +14,7 @@ import kotlinx.datetime.Instant
 fun Route.analyticsRoutes(service: AnalyticsService = AnalyticsService()) {
     route("/projects/{projectId}/analytics") {
         get("/overview") {
-            val projectId = call.parameters["projectId"]!!
+            val projectId = call.requireProjectId()
             val (start, end) = parseDateRange(call)
             val applicationId = call.request.queryParameters["application_id"]
             val response = service.overview(projectId, start, end, applicationId)
@@ -22,7 +22,7 @@ fun Route.analyticsRoutes(service: AnalyticsService = AnalyticsService()) {
         }
 
         get("/screens") {
-            val projectId = call.parameters["projectId"]!!
+            val projectId = call.requireProjectId()
             val (start, end) = parseDateRange(call)
             val applicationId = call.request.queryParameters["application_id"]
             val response = service.screens(projectId, start, end, applicationId)
@@ -30,7 +30,7 @@ fun Route.analyticsRoutes(service: AnalyticsService = AnalyticsService()) {
         }
 
         get("/journeys") {
-            val projectId = call.parameters["projectId"]!!
+            val projectId = call.requireProjectId()
             val (start, end) = parseDateRange(call)
             val applicationId = call.request.queryParameters["application_id"]
             val response = service.journeys(projectId, start, end, applicationId)
@@ -38,13 +38,39 @@ fun Route.analyticsRoutes(service: AnalyticsService = AnalyticsService()) {
         }
 
         post("/funnels/query") {
-            val projectId = call.parameters["projectId"]!!
+            val projectId = call.requireProjectId()
             val request = call.receive<FunnelRequest>()
             val response = service.funnel(projectId, request)
             call.respond(DataResponse(response))
         }
+
+        get("/events/summary") {
+            val projectId = call.requireProjectId()
+            val (start, end) = parseDateRange(call)
+            val applicationId = call.request.queryParameters["application_id"]
+            val response = service.eventSummary(projectId, start, end, applicationId)
+            call.respond(DataResponse(response))
+        }
+
+        get("/events/breakdown") {
+            val projectId = call.requireProjectId()
+            val (start, end) = parseDateRange(call)
+            val eventKey =
+                call.request.queryParameters["event_key"]
+                    ?: throw ApiException("VALIDATION_ERROR", HttpStatusCode.BadRequest, "event_key는 필수입니다")
+            val propertyKey =
+                call.request.queryParameters["property_key"]
+                    ?: throw ApiException("VALIDATION_ERROR", HttpStatusCode.BadRequest, "property_key는 필수입니다")
+            val applicationId = call.request.queryParameters["application_id"]
+            val response = service.eventBreakdown(projectId, start, end, eventKey, propertyKey, applicationId)
+            call.respond(DataResponse(response))
+        }
     }
 }
+
+private fun io.ktor.server.routing.RoutingCall.requireProjectId(): String =
+    parameters["projectId"]
+        ?: throw ApiException("VALIDATION_ERROR", HttpStatusCode.BadRequest, "projectId는 필수입니다")
 
 private fun parseDateRange(call: io.ktor.server.routing.RoutingCall): Pair<Instant, Instant> {
     val startDate =
