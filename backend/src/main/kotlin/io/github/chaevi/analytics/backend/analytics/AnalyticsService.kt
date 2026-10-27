@@ -397,6 +397,129 @@ class AnalyticsService {
         }
     }
 
+    @Suppress("LongMethod")
+    fun retention(
+        projectId: String,
+        start: Instant,
+        end: Instant,
+        retentionDays: List<Int>,
+        type: String,
+        applicationId: String?,
+    ): RetentionResponse {
+        val projUuid = UUID.fromString(projectId)
+
+        return transaction {
+            var baseCondition: Op<Boolean> =
+                (AnalyticsEventTable.projectId eq projUuid)
+
+            applicationId?.let {
+                baseCondition = baseCondition and (AnalyticsEventTable.applicationId eq UUID.fromString(it))
+            }
+
+            // 사용자별 활동 날짜 목록 수집
+            val allActivity = mutableMapOf<String, MutableSet<String>>()
+            AnalyticsEventTable
+                .select(AnalyticsEventTable.anonymousId, AnalyticsEventTable.occurredAt)
+                .where { baseCondition }
+                .forEach {
+                    val userId = it[AnalyticsEventTable.anonymousId].toString()
+                    val dateStr = it[AnalyticsEventTable.occurredAt].toString().substring(0, 10)
+                    allActivity.getOrPut(userId) { mutableSetOf() }.add(dateStr)
+                }
+
+            // 코호트 결정
+            val startDate = start.toString().substring(0, 10)
+            val endDate = end.toString().substring(0, 10)
+
+            val cohortUsers: Map<String, Set<String>> =
+                if (type == "new") {
+                    // 신규: 첫 활동일이 기간 내인 사용자
+                    val userFirstDate = allActivity.mapValues { (_, dates) -> dates.min() }
+                    userFirstDate
+                        .filter { (_, firstDate) -> firstDate in startDate..endDate }
+                        .entries
+                        .groupBy({ it.value }, { it.key })
+                        .mapValues { (_, users) -> users.toSet() }
+                } else {
+                    // 활성: 해당 날짜에 활동한 모든 사용자
+                    val result = mutableMapOf<String, MutableSet<String>>()
+                    allActivity.forEach { (userId, dates) ->
+                        dates.filter { it in startDate..endDate }.forEach { date ->
+                            result.getOrPut(date) { mutableSetOf() }.add(userId)
+                        }
+                    }
+                    result
+                }
+
+            // 날짜 목록 생성
+            val dates = generateDateRange(startDate, endDate)
+            val today =
+                kotlinx.datetime.Clock.System
+                    .now()
+                    .toString()
+                    .substring(0, 10)
+
+            val cohorts =
+                dates.map { cohortDate ->
+                    val users = cohortUsers[cohortDate] ?: emptySet()
+                    val retentionMap = mutableMapOf<String, RetentionValue>()
+
+                    for (day in retentionDays) {
+                        val targetDate = addDays(cohortDate, day)
+                        // 미래 날짜는 생략
+                        if (targetDate > today) continue
+
+                        val retainedCount =
+                            users.count { userId ->
+                                allActivity[userId]?.contains(targetDate) == true
+                            }
+                        val rate =
+                            if (users.isNotEmpty()) {
+                                (retainedCount.toDouble() / users.size * 10000).toLong() / 10000.0
+                            } else {
+                                0.0
+                            }
+                        retentionMap[day.toString()] = RetentionValue(retainedCount.toLong(), rate)
+                    }
+
+                    CohortEntry(
+                        date = cohortDate,
+                        cohortSize = users.size.toLong(),
+                        retention = retentionMap,
+                    )
+                }
+
+            RetentionResponse(
+                type = type,
+                retentionDays = retentionDays,
+                cohorts = cohorts,
+                period = PeriodInfo(start.toString(), end.toString()),
+            )
+        }
+    }
+
+    private fun generateDateRange(
+        start: String,
+        end: String,
+    ): List<String> {
+        val dates = mutableListOf<String>()
+        var current = java.time.LocalDate.parse(start)
+        val endDate = java.time.LocalDate.parse(end)
+        while (!current.isAfter(endDate)) {
+            dates.add(current.toString())
+            current = current.plusDays(1)
+        }
+        return dates
+    }
+
+    private fun addDays(
+        dateStr: String,
+        days: Int,
+    ): String {
+        val date = java.time.LocalDate.parse(dateStr)
+        return date.plusDays(days.toLong()).toString()
+    }
+
     private fun extractJsonField(
         json: String,
         field: String,

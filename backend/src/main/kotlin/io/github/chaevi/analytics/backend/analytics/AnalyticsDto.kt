@@ -100,3 +100,24 @@ data class BreakdownEntry(
     val count: Long,
     val uniqueUsers: Long,
 )
+
+@Serializable
+data class RetentionResponse(
+    val type: String,
+    val retentionDays: List<Int>,
+    val cohorts: List<CohortEntry>,
+    val period: PeriodInfo,
+)
+
+@Serializable
+data class CohortEntry(
+    val date: String,
+    val cohortSize: Long,
+    val retention: Map<String, RetentionValue>,
+)
+
+@Serializable
+data class RetentionValue(
+    val count: Long,
+    val rate: Double,
+)

@@ -11,6 +11,7 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import kotlinx.datetime.Instant
 
+@Suppress("LongMethod")
 fun Route.analyticsRoutes(service: AnalyticsService = AnalyticsService()) {
     route("/projects/{projectId}/analytics") {
         get("/overview") {
@@ -41,6 +42,17 @@ fun Route.analyticsRoutes(service: AnalyticsService = AnalyticsService()) {
             val projectId = call.requireProjectId()
             val request = call.receive<FunnelRequest>()
             val response = service.funnel(projectId, request)
+            call.respond(DataResponse(response))
+        }
+
+        get("/retention") {
+            val projectId = call.requireProjectId()
+            val (start, end) = parseDateRange(call)
+            val retentionDaysParam = call.request.queryParameters["retention_days"] ?: "1,7,30"
+            val retentionDays = retentionDaysParam.split(",").map { it.trim().toInt() }
+            val type = call.request.queryParameters["type"] ?: "new"
+            val applicationId = call.request.queryParameters["application_id"]
+            val response = service.retention(projectId, start, end, retentionDays, type, applicationId)
             call.respond(DataResponse(response))
         }
 
