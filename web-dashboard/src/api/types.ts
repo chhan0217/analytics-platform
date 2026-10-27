@@ -112,6 +112,20 @@ export interface BreakdownEntry {
   unique_users: number;
 }
 
+// 리텐션
+export interface RetentionResponse {
+  type: string;
+  retention_days: number[];
+  cohorts: CohortEntry[];
+  period: { start_date: string; end_date: string };
+}
+
+export interface CohortEntry {
+  date: string;
+  cohort_size: number;
+  retention: Record<string, { count: number; rate: number }>;
+}
+
 // 이벤트
 export interface AnalyticsEvent {
   id: string;
