@@ -11,6 +11,7 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import kotlinx.datetime.Instant
 
+@Suppress("LongMethod")
 fun Route.analyticsRoutes(service: AnalyticsService = AnalyticsService()) {
     route("/projects/{projectId}/analytics") {
         get("/overview") {
@@ -41,6 +42,17 @@ fun Route.analyticsRoutes(service: AnalyticsService = AnalyticsService()) {
             val projectId = call.requireProjectId()
             val request = call.receive<FunnelRequest>()
             val response = service.funnel(projectId, request)
+            call.respond(DataResponse(response))
+        }
+
+        get("/retention") {
+            val projectId = call.requireProjectId()
+            val (start, end) = parseDateRange(call)
+            val retentionDaysParam = call.request.queryParameters["retention_days"] ?: "1,7,30"
+            val retentionDays = retentionDaysParam.split(",").map { it.trim().toInt() }
+            val type = call.request.queryParameters["type"] ?: "new"
+            val applicationId = call.request.queryParameters["application_id"]
+            val response = service.retention(projectId, start, end, retentionDays, type, applicationId)
             call.respond(DataResponse(response))
         }
 
@@ -79,5 +91,12 @@ private fun parseDateRange(call: io.ktor.server.routing.RoutingCall): Pair<Insta
     val endDate =
         call.request.queryParameters["end_date"]
             ?: throw ApiException("VALIDATION_ERROR", HttpStatusCode.BadRequest, "end_date는 필수입니다")
-    return Pair(Instant.parse(startDate), Instant.parse(endDate))
+    return Pair(parseInstant(startDate), parseInstant(endDate))
 }
+
+private fun parseInstant(value: String): Instant =
+    if (value.contains("T")) {
+        Instant.parse(value)
+    } else {
+        Instant.parse("${value}T00:00:00Z")
+    }

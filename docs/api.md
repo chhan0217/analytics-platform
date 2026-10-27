@@ -273,6 +273,7 @@
 | `POST` | `/admin/projects/{projectId}/analytics/funnels/query` | 퍼널 분석 |
 | `GET` | `/admin/projects/{projectId}/analytics/events/summary` | 이벤트별 집계 (횟수, 사용자 수, 세션 수) |
 | `GET` | `/admin/projects/{projectId}/analytics/events/breakdown` | 속성별 분석 (event_key + property_key 기준) |
+| `GET` | `/admin/projects/{projectId}/analytics/retention` | 리텐션 분석 (type=new/active, retention_days=1,7,30) |
 
 ### 공통 쿼리 파라미터
 
