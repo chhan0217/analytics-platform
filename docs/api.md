@@ -271,6 +271,8 @@
 | `GET` | `/admin/projects/{projectId}/analytics/screens` | 화면별 통계 |
 | `GET` | `/admin/projects/{projectId}/analytics/journeys` | 화면 전이 집계 |
 | `POST` | `/admin/projects/{projectId}/analytics/funnels/query` | 퍼널 분석 |
+| `GET` | `/admin/projects/{projectId}/analytics/events/summary` | 이벤트별 집계 (횟수, 사용자 수, 세션 수) |
+| `GET` | `/admin/projects/{projectId}/analytics/events/breakdown` | 속성별 분석 (event_key + property_key 기준) |
 
 ### 공통 쿼리 파라미터
 
