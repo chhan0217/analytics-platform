@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { api } from "../../api/client";
+import { downloadCsv } from "../../utils/csv";
 import { useProject } from "../../context/ProjectContext";
 import type {
   DataResponse,
@@ -133,6 +134,29 @@ export default function EventSummaryPage() {
           >
             조회
           </button>
+          {events.length > 0 && (
+            <button
+              type="button"
+              onClick={() =>
+                downloadCsv(
+                  `events_${startDate}_${endDate}.csv`,
+                  ["이벤트 키", "횟수", "사용자 수", "세션 수"],
+                  events.map((e) => [e.event_key, e.count, e.unique_users, e.unique_sessions]),
+                )
+              }
+              style={{
+                padding: "8px 16px",
+                background: "#059669",
+                color: "#fff",
+                border: "none",
+                borderRadius: 4,
+                cursor: "pointer",
+                marginLeft: 8,
+              }}
+            >
+              CSV
+            </button>
+          )}
         </form>
 
         {loaded && events.length === 0 && <p style={{ color: "#666" }}>이벤트가 없습니다.</p>}

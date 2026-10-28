@@ -2,12 +2,15 @@ import { useState } from "react";
 import { api } from "../../api/client";
 import { useProject } from "../../context/ProjectContext";
 import type { DataResponse } from "../../api/types";
+import { downloadCsv } from "../../utils/csv";
 
 interface ScreenEntry {
   screen_id: string;
   view_count: number;
   unique_users: number;
   avg_duration_ms: number | null;
+  bounce_count: number;
+  bounce_rate: number;
 }
 
 interface TransitionEntry {
@@ -122,6 +125,27 @@ export default function AnalyticsPage({ tab }: { tab: "screens" | "funnels" | "j
           <button onClick={() => void loadScreens()} style={btnStyle}>
             조회
           </button>
+          {screens.length > 0 && (
+            <button
+              onClick={() =>
+                downloadCsv(
+                  `screens_${startDate}_${endDate}.csv`,
+                  ["화면", "방문 수", "고유 사용자", "평균 체류시간(ms)", "이탈 수", "이탈률"],
+                  screens.map((s) => [
+                    s.screen_id,
+                    s.view_count,
+                    s.unique_users,
+                    s.avg_duration_ms ?? "",
+                    s.bounce_count,
+                    (s.bounce_rate * 100).toFixed(1) + "%",
+                  ]),
+                )
+              }
+              style={csvBtnStyle}
+            >
+              CSV
+            </button>
+          )}
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ borderBottom: "2px solid #e5e7eb", textAlign: "left" }}>
@@ -129,6 +153,8 @@ export default function AnalyticsPage({ tab }: { tab: "screens" | "funnels" | "j
                 <th style={{ padding: 8 }}>방문 수</th>
                 <th style={{ padding: 8 }}>고유 사용자</th>
                 <th style={{ padding: 8 }}>평균 체류시간</th>
+                <th style={{ padding: 8 }}>이탈 수</th>
+                <th style={{ padding: 8 }}>이탈률</th>
               </tr>
             </thead>
             <tbody>
@@ -142,6 +168,10 @@ export default function AnalyticsPage({ tab }: { tab: "screens" | "funnels" | "j
                   <td style={{ padding: 8, color: s.avg_duration_ms ? "#111" : "#ccc" }}>
                     {s.avg_duration_ms ? formatDuration(s.avg_duration_ms) : "-"}
                   </td>
+                  <td style={{ padding: 8 }}>{s.bounce_count}</td>
+                  <td style={{ padding: 8, color: s.bounce_rate > 0.5 ? "#dc2626" : "#111" }}>
+                    {(s.bounce_rate * 100).toFixed(1)}%
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -154,6 +184,20 @@ export default function AnalyticsPage({ tab }: { tab: "screens" | "funnels" | "j
           <button onClick={() => void loadJourneys()} style={btnStyle}>
             조회
           </button>
+          {transitions.length > 0 && (
+            <button
+              onClick={() =>
+                downloadCsv(
+                  `journeys_${startDate}_${endDate}.csv`,
+                  ["출발 화면", "도착 화면", "전이 횟수"],
+                  transitions.map((t) => [t.from_screen, t.to_screen, t.count]),
+                )
+              }
+              style={csvBtnStyle}
+            >
+              CSV
+            </button>
+          )}
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ borderBottom: "2px solid #e5e7eb", textAlign: "left" }}>
@@ -202,6 +246,26 @@ export default function AnalyticsPage({ tab }: { tab: "screens" | "funnels" | "j
             분석
           </button>
           {funnelResult && (
+            <button
+              onClick={() =>
+                downloadCsv(
+                  `funnel_${startDate}_${endDate}.csv`,
+                  ["단계", "이벤트 키", "사용자 수", "세션 수", "전환율"],
+                  funnelResult.steps.map((s) => [
+                    s.step,
+                    s.event_key,
+                    s.unique_users,
+                    s.unique_sessions,
+                    (s.conversion_rate * 100).toFixed(1) + "%",
+                  ]),
+                )
+              }
+              style={csvBtnStyle}
+            >
+              CSV
+            </button>
+          )}
+          {funnelResult && (
             <div>
               <div style={{ marginBottom: "1rem", fontSize: 14, color: "#666" }}>
                 전체 전환율: {(funnelResult.overall_conversion_rate * 100).toFixed(1)}%
@@ -245,6 +309,17 @@ const btnStyle: React.CSSProperties = {
   borderRadius: 4,
   cursor: "pointer",
   marginBottom: "1rem",
+};
+
+const csvBtnStyle: React.CSSProperties = {
+  padding: "8px 16px",
+  background: "#059669",
+  color: "#fff",
+  border: "none",
+  borderRadius: 4,
+  cursor: "pointer",
+  marginBottom: "1rem",
+  marginLeft: 8,
 };
 
 const stepCircle: React.CSSProperties = {

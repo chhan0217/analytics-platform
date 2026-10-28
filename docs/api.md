@@ -267,12 +267,14 @@
 
 | 메서드 | 경로 | 설명 |
 |---|---|---|
+| `GET` | `/admin/projects/{projectId}/analytics/active-users` | DAU/WAU/MAU + 스티키니스 |
 | `GET` | `/admin/projects/{projectId}/analytics/overview` | 개요 (이벤트 수, 세션 수, 사용자 수) |
-| `GET` | `/admin/projects/{projectId}/analytics/screens` | 화면별 통계 |
+| `GET` | `/admin/projects/{projectId}/analytics/screens` | 화면별 통계 (체류시간, 이탈률 포함) |
 | `GET` | `/admin/projects/{projectId}/analytics/journeys` | 화면 전이 집계 |
 | `POST` | `/admin/projects/{projectId}/analytics/funnels/query` | 퍼널 분석 |
 | `GET` | `/admin/projects/{projectId}/analytics/events/summary` | 이벤트별 집계 (횟수, 사용자 수, 세션 수) |
 | `GET` | `/admin/projects/{projectId}/analytics/events/breakdown` | 속성별 분석 (event_key + property_key 기준) |
+| `GET` | `/admin/projects/{projectId}/analytics/trend` | 시계열 추이 (일별/시간별 이벤트·세션·사용자 수) |
 | `GET` | `/admin/projects/{projectId}/analytics/retention` | 리텐션 분석 (type=new/active, retention_days=1,7,30) |
 
 ### 공통 쿼리 파라미터
@@ -283,6 +285,50 @@
 | `end_date` | ISO-8601 | 종료일 (필수) |
 | `platform` | enum | 플랫폼 필터 |
 | `application_id` | UUID | 앱 필터 |
+
+### 활성 사용자 파라미터 (`/active-users`)
+
+| 파라미터 | 타입 | 설명 |
+|---|---|---|
+| `date` | YYYY-MM-DD | 기준 날짜 (기본: 오늘, KST 기준) |
+| `application_id` | UUID | 앱 필터 (선택) |
+
+### 활성 사용자 응답
+
+```json
+{
+  "data": {
+    "date": "2026-10-28",
+    "dau": 18,
+    "wau": 35,
+    "mau": 80,
+    "stickiness": 0.225
+  }
+}
+```
+
+### 시계열 추이 추가 파라미터 (`/trend`)
+
+| 파라미터 | 타입 | 설명 |
+|---|---|---|
+| `granularity` | string | `daily` (기본) 또는 `hourly` |
+| `event_key` | string | 특정 이벤트 필터 (선택) |
+| `property_name` | string | 속성 필터 키 (선택, `property_value`와 함께 사용) |
+| `property_value` | string | 속성 필터 값 (선택, `property_name`과 함께 사용) |
+
+### 시계열 추이 응답
+
+```json
+{
+  "data": {
+    "granularity": "daily",
+    "data_points": [
+      { "date": "2026-10-27", "event_count": 150, "session_count": 30, "user_count": 12 },
+      { "date": "2026-10-28", "event_count": 200, "session_count": 45, "user_count": 18 }
+    ],
+    "period": { "start_date": "...", "end_date": "..." }
+  }
+}
 
 ### 퍼널 분석 요청 (POST `/funnels/query`)
 

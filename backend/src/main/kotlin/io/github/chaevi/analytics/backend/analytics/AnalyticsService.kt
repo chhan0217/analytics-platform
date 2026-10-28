@@ -12,7 +12,81 @@ import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.UUID
 
+private val ZONE_KST = java.time.ZoneId.of("Asia/Seoul")
+
+/** DB timestamp → KST 기준 날짜 문자열 (YYYY-MM-DD) */
+private fun toKstDate(instant: kotlinx.datetime.Instant): String {
+    val javaInstant = java.time.Instant.parse(instant.toString())
+    return javaInstant.atZone(ZONE_KST).toLocalDate().toString()
+}
+
+/** DB timestamp → KST 기준 시간 문자열 (YYYY-MM-DDTHH) */
+private fun toKstHour(instant: kotlinx.datetime.Instant): String {
+    val javaInstant = java.time.Instant.parse(instant.toString())
+    val zdt = javaInstant.atZone(ZONE_KST)
+    return zdt.toLocalDate().toString() + "T" + "%02d".format(zdt.hour)
+}
+
+/** 오늘 날짜 (KST 기준) */
+internal fun todayKst(): String =
+    java.time.Instant
+        .now()
+        .atZone(ZONE_KST)
+        .toLocalDate()
+        .toString()
+
+@Suppress("LargeClass")
 class AnalyticsService {
+    fun activeUsers(
+        projectId: String,
+        date: String,
+        applicationId: String?,
+    ): ActiveUsersResponse {
+        val projUuid = UUID.fromString(projectId)
+        val baseDate = java.time.LocalDate.parse(date)
+        val wauStart = baseDate.minusDays(6).toString()
+        val mauStart = baseDate.minusDays(29).toString()
+
+        return transaction {
+            var baseCondition: Op<Boolean> =
+                (AnalyticsEventTable.projectId eq projUuid)
+
+            applicationId?.let {
+                baseCondition = baseCondition and (AnalyticsEventTable.applicationId eq UUID.fromString(it))
+            }
+
+            val userDates = mutableMapOf<String, MutableSet<String>>()
+            AnalyticsEventTable
+                .select(AnalyticsEventTable.anonymousId, AnalyticsEventTable.occurredAt)
+                .where { baseCondition }
+                .forEach {
+                    val dateStr = toKstDate(it[AnalyticsEventTable.occurredAt])
+                    if (dateStr in mauStart..date) {
+                        val userId = it[AnalyticsEventTable.anonymousId].toString()
+                        userDates.getOrPut(userId) { mutableSetOf() }.add(dateStr)
+                    }
+                }
+
+            val dauUsers = userDates.count { (_, dates) -> dates.contains(date) }
+            val wauUsers = userDates.count { (_, dates) -> dates.any { it in wauStart..date } }
+            val mauUsers = userDates.size
+            val stickiness =
+                if (mauUsers > 0) {
+                    (dauUsers.toDouble() / mauUsers * 10000).toLong() / 10000.0
+                } else {
+                    0.0
+                }
+
+            ActiveUsersResponse(
+                date = date,
+                dau = dauUsers.toLong(),
+                wau = wauUsers.toLong(),
+                mau = mauUsers.toLong(),
+                stickiness = stickiness,
+            )
+        }
+    }
+
     fun overview(
         projectId: String,
         start: Instant,
@@ -57,6 +131,7 @@ class AnalyticsService {
         }
     }
 
+    @Suppress("LongMethod")
     fun screens(
         projectId: String,
         start: Instant,
@@ -84,14 +159,25 @@ class AnalyticsService {
                 leaveCondition = leaveCondition and (AnalyticsEventTable.applicationId eq appUuid)
             }
 
+            data class ViewRow(
+                val screenId: String,
+                val userId: String,
+                val sessionId: String,
+                val occurredAt: Instant,
+            )
+
             val viewRows =
                 AnalyticsEventTable
                     .selectAll()
                     .where { viewCondition }
                     .map {
                         val props = it[AnalyticsEventTable.properties]
-                        val screenId = extractJsonField(props, "screen_id") ?: "unknown"
-                        Pair(screenId, it[AnalyticsEventTable.anonymousId].toString())
+                        ViewRow(
+                            screenId = extractJsonField(props, "screen_id") ?: "unknown",
+                            userId = it[AnalyticsEventTable.anonymousId].toString(),
+                            sessionId = it[AnalyticsEventTable.sessionId].toString(),
+                            occurredAt = it[AnalyticsEventTable.occurredAt],
+                        )
                     }
 
             val durationByScreen = mutableMapOf<String, MutableList<Long>>()
@@ -105,22 +191,45 @@ class AnalyticsService {
                     durationByScreen.getOrPut(screenId) { mutableListOf() }.add(duration)
                 }
 
-            val grouped = viewRows.groupBy { it.first }
+            // 이탈 화면 계산: 각 세션의 마지막 screen_view가 이탈 화면
+            val bounceScreenCounts = mutableMapOf<String, Long>()
+            val sessionsPerScreen = mutableMapOf<String, MutableSet<String>>()
+
+            val bySession = viewRows.groupBy { it.sessionId }
+            bySession.forEach { (sessionId, events) ->
+                val lastScreen = events.maxBy { it.occurredAt }.screenId
+                bounceScreenCounts[lastScreen] = (bounceScreenCounts[lastScreen] ?: 0) + 1
+                events.map { it.screenId }.toSet().forEach { screenId ->
+                    sessionsPerScreen.getOrPut(screenId) { mutableSetOf() }.add(sessionId)
+                }
+            }
+
+            val grouped = viewRows.groupBy { it.screenId }
             val screens =
                 grouped
                     .map { (screenId, entries) ->
                         val durations = durationByScreen[screenId]
                         val avgDuration = durations?.let { it.sum() / it.size }
+                        val sessionCount = sessionsPerScreen[screenId]?.size ?: 0
+                        val bounces = bounceScreenCounts[screenId] ?: 0
+                        val rate =
+                            if (sessionCount > 0) {
+                                (bounces.toDouble() / sessionCount * 10000).toLong() / 10000.0
+                            } else {
+                                0.0
+                            }
                         ScreenEntry(
                             screenId = screenId,
                             viewCount = entries.size.toLong(),
                             uniqueUsers =
                                 entries
-                                    .map { it.second }
+                                    .map { it.userId }
                                     .toSet()
                                     .size
                                     .toLong(),
                             avgDurationMs = avgDuration,
+                            bounceCount = bounces,
+                            bounceRate = rate,
                         )
                     }.sortedByDescending { it.viewCount }
 
@@ -398,6 +507,86 @@ class AnalyticsService {
     }
 
     @Suppress("LongMethod")
+    fun trend(query: TrendQuery): TrendResponse {
+        val projUuid = UUID.fromString(query.projectId)
+
+        return transaction {
+            var condition: Op<Boolean> =
+                (AnalyticsEventTable.projectId eq projUuid) and
+                    (AnalyticsEventTable.occurredAt greaterEq query.start) and
+                    (AnalyticsEventTable.occurredAt lessEq query.end)
+
+            query.applicationId?.let {
+                condition = condition and (AnalyticsEventTable.applicationId eq UUID.fromString(it))
+            }
+            query.eventKey?.let {
+                condition = condition and (AnalyticsEventTable.eventKey eq it)
+            }
+
+            val rows =
+                AnalyticsEventTable
+                    .selectAll()
+                    .where { condition }
+                    .mapNotNull { row ->
+                        if (query.propertyName != null && query.propertyValue != null) {
+                            val actual = extractJsonField(row[AnalyticsEventTable.properties], query.propertyName)
+                            if (actual != query.propertyValue) return@mapNotNull null
+                        }
+                        val instant = row[AnalyticsEventTable.occurredAt]
+                        val dateKey =
+                            if (query.granularity == "hourly") {
+                                toKstHour(instant)
+                            } else {
+                                toKstDate(instant)
+                            }
+                        Triple(
+                            dateKey,
+                            row[AnalyticsEventTable.sessionId].toString(),
+                            row[AnalyticsEventTable.anonymousId].toString(),
+                        )
+                    }
+
+            val grouped = rows.groupBy { (dateKey, _, _) -> dateKey }
+
+            val allKeys =
+                if (query.granularity == "hourly") {
+                    generateHourRangeKst(query.start, query.end)
+                } else {
+                    generateDateRangeKst(query.start, query.end)
+                }
+
+            val dataPoints =
+                allKeys.map { key ->
+                    val entries = grouped[key] ?: emptyList()
+                    val sessions =
+                        entries
+                            .map { it.second }
+                            .toSet()
+                            .size
+                            .toLong()
+                    val users =
+                        entries
+                            .map { it.third }
+                            .toSet()
+                            .size
+                            .toLong()
+                    TrendDataPoint(
+                        date = key,
+                        eventCount = entries.size.toLong(),
+                        sessionCount = sessions,
+                        userCount = users,
+                    )
+                }
+
+            TrendResponse(
+                granularity = query.granularity,
+                dataPoints = dataPoints,
+                period = PeriodInfo(query.start.toString(), query.end.toString()),
+            )
+        }
+    }
+
+    @Suppress("LongMethod")
     fun retention(
         projectId: String,
         start: Instant,
@@ -423,13 +612,13 @@ class AnalyticsService {
                 .where { baseCondition }
                 .forEach {
                     val userId = it[AnalyticsEventTable.anonymousId].toString()
-                    val dateStr = it[AnalyticsEventTable.occurredAt].toString().substring(0, 10)
+                    val dateStr = toKstDate(it[AnalyticsEventTable.occurredAt])
                     allActivity.getOrPut(userId) { mutableSetOf() }.add(dateStr)
                 }
 
             // 코호트 결정
-            val startDate = start.toString().substring(0, 10)
-            val endDate = end.toString().substring(0, 10)
+            val startDate = toKstDate(start)
+            val endDate = toKstDate(end)
 
             val cohortUsers: Map<String, Set<String>> =
                 if (type == "new") {
@@ -453,11 +642,7 @@ class AnalyticsService {
 
             // 날짜 목록 생성
             val dates = generateDateRange(startDate, endDate)
-            val today =
-                kotlinx.datetime.Clock.System
-                    .now()
-                    .toString()
-                    .substring(0, 10)
+            val today = todayKst()
 
             val cohorts =
                 dates.map { cohortDate ->
@@ -510,6 +695,44 @@ class AnalyticsService {
             current = current.plusDays(1)
         }
         return dates
+    }
+
+    private fun generateDateRangeKst(
+        start: Instant,
+        end: Instant,
+    ): List<String> {
+        val startDate =
+            java.time.Instant
+                .parse(start.toString())
+                .atZone(ZONE_KST)
+                .toLocalDate()
+        val endDate =
+            java.time.Instant
+                .parse(end.toString())
+                .atZone(ZONE_KST)
+                .toLocalDate()
+        return generateDateRange(startDate.toString(), endDate.toString())
+    }
+
+    private fun generateHourRangeKst(
+        start: Instant,
+        end: Instant,
+    ): List<String> {
+        val hours = mutableListOf<String>()
+        var current =
+            java.time.Instant
+                .parse(start.toString())
+                .atZone(ZONE_KST)
+        val endTime =
+            java.time.Instant
+                .parse(end.toString())
+                .atZone(ZONE_KST)
+        while (!current.isAfter(endTime)) {
+            val key = current.toLocalDate().toString() + "T" + "%02d".format(current.hour)
+            hours.add(key)
+            current = current.plusHours(1)
+        }
+        return hours
     }
 
     private fun addDays(

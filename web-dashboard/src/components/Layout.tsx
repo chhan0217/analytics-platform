@@ -11,6 +11,7 @@ const analysisItems = [
   { to: "/screens", label: "화면 분석" },
   { to: "/funnels", label: "퍼널" },
   { to: "/journeys", label: "여정" },
+  { to: "/trend", label: "시계열 추이" },
   { to: "/retention", label: "리텐션" },
   { to: "/users", label: "사용자" },
 ];
