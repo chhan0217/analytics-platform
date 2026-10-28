@@ -3,6 +3,7 @@ import { api } from "../../api/client";
 import { useProject } from "../../context/ProjectContext";
 import type { DataResponse } from "../../api/types";
 import { downloadCsv } from "../../utils/csv";
+import DateRangeFilter from "../../components/DateRangeFilter";
 
 interface ScreenEntry {
   screen_id: string;
@@ -56,21 +57,39 @@ export default function AnalyticsPage({ tab }: { tab: "screens" | "funnels" | "j
   const [transitions, setTransitions] = useState<TransitionEntry[]>([]);
   const [funnelSteps, setFunnelSteps] = useState("");
   const [funnelResult, setFunnelResult] = useState<FunnelResponse | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const dateParams = `start_date=${startDate}&end_date=${endDate}`;
 
   const loadScreens = async () => {
-    const res = await api<DataResponse<{ screens: ScreenEntry[] }>>(
-      `/admin/projects/${projectId}/analytics/screens?${dateParams}`,
-    );
-    setScreens(res.data.screens);
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api<DataResponse<{ screens: ScreenEntry[] }>>(
+        `/admin/projects/${projectId}/analytics/screens?${dateParams}`,
+      );
+      setScreens(res.data.screens);
+    } catch {
+      setError("화면 데이터를 불러오지 못했습니다.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const loadJourneys = async () => {
-    const res = await api<DataResponse<{ transitions: TransitionEntry[] }>>(
-      `/admin/projects/${projectId}/analytics/journeys?${dateParams}`,
-    );
-    setTransitions(res.data.transitions);
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api<DataResponse<{ transitions: TransitionEntry[] }>>(
+        `/admin/projects/${projectId}/analytics/journeys?${dateParams}`,
+      );
+      setTransitions(res.data.transitions);
+    } catch {
+      setError("여정 데이터를 불러오지 못했습니다.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const loadFunnel = async () => {
@@ -81,18 +100,26 @@ export default function AnalyticsPage({ tab }: { tab: "screens" | "funnels" | "j
       .map((eventKey) => ({ event_key: eventKey }));
     if (steps.length < 2) return;
 
-    const res = await api<DataResponse<FunnelResponse>>(
-      `/admin/projects/${projectId}/analytics/funnels/query`,
-      {
-        method: "POST",
-        body: JSON.stringify({
-          start_date: startDate,
-          end_date: endDate,
-          steps,
-        }),
-      },
-    );
-    setFunnelResult(res.data);
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api<DataResponse<FunnelResponse>>(
+        `/admin/projects/${projectId}/analytics/funnels/query`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            start_date: startDate,
+            end_date: endDate,
+            steps,
+          }),
+        },
+      );
+      setFunnelResult(res.data);
+    } catch {
+      setError("퍼널 데이터를 불러오지 못했습니다.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const titles: Record<string, string> = {
@@ -105,26 +132,23 @@ export default function AnalyticsPage({ tab }: { tab: "screens" | "funnels" | "j
     <div>
       <h2>{titles[tab]}</h2>
 
-      <div style={{ display: "flex", gap: 8, marginBottom: "1.5rem", alignItems: "center" }}>
-        <input
-          type="date"
-          value={startDate}
-          onChange={(e) => setStartDate(e.target.value)}
-          style={{ padding: 8, borderRadius: 4, border: "1px solid #ddd" }}
-        />
-        <input
-          type="date"
-          value={endDate}
-          onChange={(e) => setEndDate(e.target.value)}
-          style={{ padding: 8, borderRadius: 4, border: "1px solid #ddd" }}
-        />
-      </div>
+      <DateRangeFilter
+        startDate={startDate}
+        endDate={endDate}
+        onStartDateChange={setStartDate}
+        onEndDateChange={setEndDate}
+        onSearch={() => {
+          if (tab === "screens") void loadScreens();
+          else if (tab === "journeys") void loadJourneys();
+        }}
+        loading={loading}
+      />
+
+      {loading && <p style={{ color: "#6b7280" }}>로딩 중...</p>}
+      {error && <p style={{ color: "#dc2626" }}>{error}</p>}
 
       {tab === "screens" && (
         <div>
-          <button onClick={() => void loadScreens()} style={btnStyle}>
-            조회
-          </button>
           {screens.length > 0 && (
             <button
               onClick={() =>
@@ -181,9 +205,6 @@ export default function AnalyticsPage({ tab }: { tab: "screens" | "funnels" | "j
 
       {tab === "journeys" && (
         <div>
-          <button onClick={() => void loadJourneys()} style={btnStyle}>
-            조회
-          </button>
           {transitions.length > 0 && (
             <button
               onClick={() =>

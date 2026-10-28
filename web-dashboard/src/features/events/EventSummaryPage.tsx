@@ -2,6 +2,7 @@ import { useState } from "react";
 import { api } from "../../api/client";
 import { downloadCsv } from "../../utils/csv";
 import { useProject } from "../../context/ProjectContext";
+import DateRangeFilter from "../../components/DateRangeFilter";
 import type {
   DataResponse,
   EventSummaryResponse,
@@ -30,20 +31,25 @@ export default function EventSummaryPage() {
   const [selectedPropertyKey, setSelectedPropertyKey] = useState<string | null>(null);
   const [breakdown, setBreakdown] = useState<BreakdownEntry[]>([]);
   const [breakdownLoading, setBreakdownLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const loadSummary = async () => {
-    const res = await api<DataResponse<EventSummaryResponse>>(
-      `/admin/projects/${projectId}/analytics/events/summary?start_date=${startDate}&end_date=${endDate}`,
-    );
-    setEvents(res.data.events);
-    setLoaded(true);
-    setSelectedEventKey(null);
-    setBreakdown([]);
-  };
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    void loadSummary();
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api<DataResponse<EventSummaryResponse>>(
+        `/admin/projects/${projectId}/analytics/events/summary?start_date=${startDate}&end_date=${endDate}`,
+      );
+      setEvents(res.data.events);
+      setLoaded(true);
+      setSelectedEventKey(null);
+      setBreakdown([]);
+    } catch {
+      setError("이벤트 집계를 불러오지 못했습니다.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleEventClick = async (eventKey: string) => {
@@ -101,38 +107,16 @@ export default function EventSummaryPage() {
     <div style={{ display: "flex", gap: "1rem" }}>
       <div style={{ flex: 1 }}>
         <h2>이벤트 집계</h2>
-        <form
-          onSubmit={handleSearch}
-          style={{ display: "flex", gap: 8, marginBottom: "1rem", flexWrap: "wrap" }}
+        <DateRangeFilter
+          startDate={startDate}
+          endDate={endDate}
+          onStartDateChange={setStartDate}
+          onEndDateChange={setEndDate}
+          onSearch={() => void loadSummary()}
+          loading={loading}
         >
-          <input
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            style={{ padding: 8, borderRadius: 4, border: "1px solid #ddd" }}
-          />
-          <input
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            style={{ padding: 8, borderRadius: 4, border: "1px solid #ddd" }}
-          />
-          <button
-            type="submit"
-            style={{
-              padding: "8px 16px",
-              background: "#4f46e5",
-              color: "#fff",
-              border: "none",
-              borderRadius: 4,
-              cursor: "pointer",
-            }}
-          >
-            조회
-          </button>
           {events.length > 0 && (
             <button
-              type="button"
               onClick={() =>
                 downloadCsv(
                   `events_${startDate}_${endDate}.csv`,
@@ -141,21 +125,23 @@ export default function EventSummaryPage() {
                 )
               }
               style={{
-                padding: "8px 16px",
+                padding: "6px 16px",
                 background: "#059669",
                 color: "#fff",
                 border: "none",
-                borderRadius: 4,
+                borderRadius: 6,
                 cursor: "pointer",
-                marginLeft: 8,
+                fontSize: 14,
               }}
             >
               CSV
             </button>
           )}
-        </form>
+        </DateRangeFilter>
 
-        {loaded && events.length === 0 && <p style={{ color: "#666" }}>이벤트가 없습니다.</p>}
+        {loading && <p style={{ color: "#6b7280" }}>로딩 중...</p>}
+        {error && <p style={{ color: "#dc2626" }}>{error}</p>}
+        {loaded && events.length === 0 && !loading && <p style={{ color: "#666" }}>이벤트가 없습니다.</p>}
 
         {events.length > 0 && (
           <>

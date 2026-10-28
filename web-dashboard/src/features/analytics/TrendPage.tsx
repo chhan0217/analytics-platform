@@ -13,6 +13,7 @@ import { api } from "../../api/client";
 import { downloadCsv } from "../../utils/csv";
 import { useProject } from "../../context/ProjectContext";
 import type { DataResponse } from "../../api/types";
+import DateRangeFilter from "../../components/DateRangeFilter";
 
 interface TrendDataPoint {
   date: string;
@@ -62,6 +63,8 @@ export default function TrendPage() {
   const [compare, setCompare] = useState(false);
   const [chartData, setChartData] = useState<ChartRow[]>([]);
   const [summary, setSummary] = useState<{ current: number; previous: number } | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const buildParams = (start: string, end: string) => {
     const params = new URLSearchParams({
@@ -78,42 +81,50 @@ export default function TrendPage() {
   };
 
   const load = async () => {
-    const currentParams = buildParams(startDate, endDate);
-    const currentRes = await api<DataResponse<TrendResponse>>(
-      `/admin/projects/${projectId}/analytics/trend?${currentParams}`,
-    );
-    const currentPoints = currentRes.data.data_points;
-
-    if (compare) {
-      const startMs = new Date(startDate).getTime();
-      const endMs = new Date(endDate).getTime();
-      const diff = endMs - startMs + 24 * 60 * 60 * 1000;
-      const prevEnd = new Date(startMs - 24 * 60 * 60 * 1000).toISOString().split("T")[0];
-      const prevStart = new Date(startMs - diff).toISOString().split("T")[0];
-
-      const prevParams = buildParams(prevStart, prevEnd);
-      const prevRes = await api<DataResponse<TrendResponse>>(
-        `/admin/projects/${projectId}/analytics/trend?${prevParams}`,
+    setLoading(true);
+    setError(null);
+    try {
+      const currentParams = buildParams(startDate, endDate);
+      const currentRes = await api<DataResponse<TrendResponse>>(
+        `/admin/projects/${projectId}/analytics/trend?${currentParams}`,
       );
-      const prevPoints = prevRes.data.data_points;
+      const currentPoints = currentRes.data.data_points;
 
-      const rows: ChartRow[] = currentPoints.map((cp, i) => ({
-        label: granularity === "hourly" ? cp.date.substring(5) + "h" : cp.date.substring(5),
-        current: cp[metric],
-        previous: prevPoints[i]?.[metric] ?? 0,
-      }));
-      setChartData(rows);
+      if (compare) {
+        const startMs = new Date(startDate).getTime();
+        const endMs = new Date(endDate).getTime();
+        const diff = endMs - startMs + 24 * 60 * 60 * 1000;
+        const prevEnd = new Date(startMs - 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+        const prevStart = new Date(startMs - diff).toISOString().split("T")[0];
 
-      const curTotal = currentPoints.reduce((s, p) => s + p[metric], 0);
-      const prevTotal = prevPoints.reduce((s, p) => s + p[metric], 0);
-      setSummary({ current: curTotal, previous: prevTotal });
-    } else {
-      const rows: ChartRow[] = currentPoints.map((cp) => ({
-        label: granularity === "hourly" ? cp.date.substring(5) + "h" : cp.date.substring(5),
-        current: cp[metric],
-      }));
-      setChartData(rows);
-      setSummary(null);
+        const prevParams = buildParams(prevStart, prevEnd);
+        const prevRes = await api<DataResponse<TrendResponse>>(
+          `/admin/projects/${projectId}/analytics/trend?${prevParams}`,
+        );
+        const prevPoints = prevRes.data.data_points;
+
+        const rows: ChartRow[] = currentPoints.map((cp, i) => ({
+          label: granularity === "hourly" ? cp.date.substring(5) + "h" : cp.date.substring(5),
+          current: cp[metric],
+          previous: prevPoints[i]?.[metric] ?? 0,
+        }));
+        setChartData(rows);
+
+        const curTotal = currentPoints.reduce((s, p) => s + p[metric], 0);
+        const prevTotal = prevPoints.reduce((s, p) => s + p[metric], 0);
+        setSummary({ current: curTotal, previous: prevTotal });
+      } else {
+        const rows: ChartRow[] = currentPoints.map((cp) => ({
+          label: granularity === "hourly" ? cp.date.substring(5) + "h" : cp.date.substring(5),
+          current: cp[metric],
+        }));
+        setChartData(rows);
+        setSummary(null);
+      }
+    } catch {
+      setError("데이터를 불러오지 못했습니다.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -126,40 +137,19 @@ export default function TrendPage() {
     <div>
       <h2>시계열 추이</h2>
 
-      <div
-        style={{
-          display: "flex",
-          gap: 8,
-          marginBottom: "1rem",
-          flexWrap: "wrap",
-          alignItems: "center",
-        }}
+      <DateRangeFilter
+        startDate={startDate}
+        endDate={endDate}
+        onStartDateChange={setStartDate}
+        onEndDateChange={setEndDate}
+        onSearch={() => void load()}
+        loading={loading}
       >
-        <input
-          type="date"
-          value={startDate}
-          onChange={(e) => setStartDate(e.target.value)}
-          style={inputStyle}
-        />
-        <input
-          type="date"
-          value={endDate}
-          onChange={(e) => setEndDate(e.target.value)}
-          style={inputStyle}
-        />
-        <select
-          value={granularity}
-          onChange={(e) => setGranularity(e.target.value)}
-          style={inputStyle}
-        >
+        <select value={granularity} onChange={(e) => setGranularity(e.target.value)} style={selectStyle}>
           <option value="daily">일별</option>
           <option value="hourly">시간별</option>
         </select>
-        <select
-          value={metric}
-          onChange={(e) => setMetric(e.target.value as MetricKey)}
-          style={inputStyle}
-        >
+        <select value={metric} onChange={(e) => setMetric(e.target.value as MetricKey)} style={selectStyle}>
           {Object.entries(metricLabels).map(([key, label]) => (
             <option key={key} value={key}>
               {label}
@@ -170,38 +160,27 @@ export default function TrendPage() {
           <input type="checkbox" checked={compare} onChange={(e) => setCompare(e.target.checked)} />
           기간 비교
         </label>
-      </div>
+      </DateRangeFilter>
 
-      <div
-        style={{
-          display: "flex",
-          gap: 8,
-          marginBottom: "1rem",
-          flexWrap: "wrap",
-          alignItems: "center",
-        }}
-      >
+      <div style={{ display: "flex", gap: 8, marginBottom: "1rem", flexWrap: "wrap", alignItems: "center" }}>
         <input
           value={eventKey}
           onChange={(e) => setEventKey(e.target.value)}
           placeholder="이벤트 키 (선택)"
-          style={{ ...inputStyle, width: 180 }}
+          style={{ ...selectStyle, width: 180 }}
         />
         <input
           value={propertyName}
           onChange={(e) => setPropertyName(e.target.value)}
           placeholder="속성 이름 (선택)"
-          style={{ ...inputStyle, width: 150 }}
+          style={{ ...selectStyle, width: 150 }}
         />
         <input
           value={propertyValue}
           onChange={(e) => setPropertyValue(e.target.value)}
           placeholder="속성 값 (선택)"
-          style={{ ...inputStyle, width: 150 }}
+          style={{ ...selectStyle, width: 150 }}
         />
-        <button onClick={() => void load()} style={btnStyle}>
-          조회
-        </button>
         {chartData.length > 0 && (
           <button
             onClick={() =>
@@ -213,12 +192,22 @@ export default function TrendPage() {
                 ),
               )
             }
-            style={{ ...btnStyle, background: "#059669" }}
+            style={csvBtnStyle}
           >
             CSV
           </button>
         )}
       </div>
+
+      {loading && <p style={{ color: "#6b7280" }}>로딩 중...</p>}
+      {error && (
+        <p style={{ color: "#dc2626" }}>
+          {error}{" "}
+          <button onClick={() => void load()} style={{ color: "#4f46e5", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
+            다시 시도
+          </button>
+        </p>
+      )}
 
       {summary && (
         <div style={{ display: "flex", gap: 16, marginBottom: "1rem" }}>
@@ -293,20 +282,21 @@ export default function TrendPage() {
   );
 }
 
-const inputStyle: React.CSSProperties = {
-  padding: 8,
-  borderRadius: 4,
-  border: "1px solid #ddd",
+const selectStyle: React.CSSProperties = {
+  padding: "6px 10px",
+  borderRadius: 6,
+  border: "1px solid #d1d5db",
   fontSize: 14,
 };
 
-const btnStyle: React.CSSProperties = {
-  padding: "8px 16px",
-  background: "#4f46e5",
+const csvBtnStyle: React.CSSProperties = {
+  padding: "6px 16px",
+  background: "#059669",
   color: "#fff",
   border: "none",
-  borderRadius: 4,
+  borderRadius: 6,
   cursor: "pointer",
+  fontSize: 14,
 };
 
 const summaryCard: React.CSSProperties = {

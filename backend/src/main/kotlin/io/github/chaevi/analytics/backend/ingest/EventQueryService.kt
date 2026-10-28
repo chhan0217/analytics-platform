@@ -1,6 +1,8 @@
 package io.github.chaevi.analytics.backend.ingest
 
 import io.github.chaevi.analytics.backend.common.ApiException
+import io.github.chaevi.analytics.backend.common.parseEndInstant
+import io.github.chaevi.analytics.backend.common.parseStartInstant
 import io.ktor.http.HttpStatusCode
 import kotlinx.datetime.Instant
 import org.jetbrains.exposed.sql.Op
@@ -32,8 +34,8 @@ class EventQueryService {
         pageSize: Int,
     ): CursorListResponse<EventResponse> {
         val projUuid = parseUuid(projectId)
-        val start = parseInstant(startDate)
-        val end = parseInstant(endDate)
+        val start = parseStartInstant(startDate)
+        val end = parseEndInstant(endDate)
         val limit = pageSize.coerceIn(1, 200)
 
         return transaction {
@@ -129,13 +131,6 @@ class EventQueryService {
             UUID.fromString(id)
         } catch (e: IllegalArgumentException) {
             throw ApiException("VALIDATION_ERROR", HttpStatusCode.BadRequest, "유효하지 않은 ID 형식입니다: $id")
-        }
-
-    private fun parseInstant(value: String): Instant =
-        try {
-            Instant.parse(value)
-        } catch (e: Exception) {
-            throw ApiException("VALIDATION_ERROR", HttpStatusCode.BadRequest, "유효하지 않은 날짜 형식입니다: $value")
         }
 
     private fun ResultRow.toEventResponse(): EventResponse =

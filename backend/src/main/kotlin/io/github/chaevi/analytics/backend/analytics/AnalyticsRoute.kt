@@ -2,6 +2,8 @@ package io.github.chaevi.analytics.backend.analytics
 
 import io.github.chaevi.analytics.backend.common.ApiException
 import io.github.chaevi.analytics.backend.common.DataResponse
+import io.github.chaevi.analytics.backend.common.parseEndInstant
+import io.github.chaevi.analytics.backend.common.parseStartInstant
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
@@ -109,8 +111,6 @@ private fun io.ktor.server.routing.RoutingCall.requireProjectId(): String =
     parameters["projectId"]
         ?: throw ApiException("VALIDATION_ERROR", HttpStatusCode.BadRequest, "projectId는 필수입니다")
 
-private val ZONE_KST = java.time.ZoneId.of("Asia/Seoul")
-
 private fun parseDateRange(call: io.ktor.server.routing.RoutingCall): Pair<Instant, Instant> {
     val startDate =
         call.request.queryParameters["start_date"]
@@ -120,28 +120,3 @@ private fun parseDateRange(call: io.ktor.server.routing.RoutingCall): Pair<Insta
             ?: throw ApiException("VALIDATION_ERROR", HttpStatusCode.BadRequest, "end_date는 필수입니다")
     return Pair(parseStartInstant(startDate), parseEndInstant(endDate))
 }
-
-/** 날짜만 넘기면 KST 해당일 00:00:00 (= UTC 전날 15:00:00), ISO면 그대로 파싱 */
-private fun parseStartInstant(value: String): Instant =
-    if (value.contains("T")) {
-        Instant.parse(value)
-    } else {
-        val kstStart =
-            java.time.LocalDate
-                .parse(value)
-                .atStartOfDay(ZONE_KST)
-        Instant.parse(kstStart.toInstant().toString())
-    }
-
-/** 날짜만 넘기면 KST 해당일 23:59:59 (= UTC 당일 14:59:59), ISO면 그대로 파싱 */
-private fun parseEndInstant(value: String): Instant =
-    if (value.contains("T")) {
-        Instant.parse(value)
-    } else {
-        val kstEnd =
-            java.time.LocalDate
-                .parse(value)
-                .atTime(23, 59, 59)
-                .atZone(ZONE_KST)
-        Instant.parse(kstEnd.toInstant().toString())
-    }
