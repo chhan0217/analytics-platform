@@ -65,8 +65,8 @@ export default function TrendPage() {
 
   const buildParams = (start: string, end: string) => {
     const params = new URLSearchParams({
-      start_date: `${start}T00:00:00Z`,
-      end_date: `${end}T23:59:59Z`,
+      start_date: start,
+      end_date: end,
       granularity,
     });
     if (eventKey.trim()) params.set("event_key", eventKey.trim());

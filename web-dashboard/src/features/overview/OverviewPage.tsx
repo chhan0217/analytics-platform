@@ -33,7 +33,8 @@ export default function OverviewPage() {
     if (!selectedProject) return;
     const end = new Date();
     const start = new Date(end.getTime() - days * 24 * 60 * 60 * 1000);
-    const params = `start_date=${start.toISOString()}&end_date=${end.toISOString()}`;
+    const fmt = (d: Date) => d.toISOString().split("T")[0];
+    const params = `start_date=${fmt(start)}&end_date=${fmt(end)}`;
     const pid = selectedProject.id;
 
     api<DataResponse<OverviewData>>(`/admin/projects/${pid}/analytics/overview?${params}`).then(

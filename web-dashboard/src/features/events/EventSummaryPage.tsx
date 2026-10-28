@@ -32,10 +32,8 @@ export default function EventSummaryPage() {
   const [breakdownLoading, setBreakdownLoading] = useState(false);
 
   const loadSummary = async () => {
-    const start = `${startDate}T00:00:00Z`;
-    const end = `${endDate}T23:59:59Z`;
     const res = await api<DataResponse<EventSummaryResponse>>(
-      `/admin/projects/${projectId}/analytics/events/summary?start_date=${start}&end_date=${end}`,
+      `/admin/projects/${projectId}/analytics/events/summary?start_date=${startDate}&end_date=${endDate}`,
     );
     setEvents(res.data.events);
     setLoaded(true);
@@ -79,11 +77,9 @@ export default function EventSummaryPage() {
 
   const loadBreakdown = async (eventKey: string, propertyKey: string) => {
     setBreakdownLoading(true);
-    const start = `${startDate}T00:00:00Z`;
-    const end = `${endDate}T23:59:59Z`;
     try {
       const res = await api<DataResponse<EventBreakdownResponse>>(
-        `/admin/projects/${projectId}/analytics/events/breakdown?start_date=${start}&end_date=${end}&event_key=${eventKey}&property_key=${propertyKey}`,
+        `/admin/projects/${projectId}/analytics/events/breakdown?start_date=${startDate}&end_date=${endDate}&event_key=${eventKey}&property_key=${propertyKey}`,
       );
       setBreakdown(res.data.breakdown);
     } catch {

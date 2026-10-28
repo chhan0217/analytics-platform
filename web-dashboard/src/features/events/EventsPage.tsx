@@ -18,9 +18,7 @@ export default function EventsPage() {
   const [loaded, setLoaded] = useState(false);
 
   const load = async (nextCursor?: string | null) => {
-    const start = `${startDate}T00:00:00Z`;
-    const end = `${endDate}T23:59:59Z`;
-    let url = `/admin/projects/${projectId}/events?start_date=${start}&end_date=${end}&page_size=20`;
+    let url = `/admin/projects/${projectId}/events?start_date=${startDate}&end_date=${endDate}&page_size=20`;
     if (eventKeyFilter) url += `&event_key=${eventKeyFilter}`;
     if (nextCursor) url += `&cursor=${nextCursor}`;
 

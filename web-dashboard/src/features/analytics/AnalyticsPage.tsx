@@ -57,7 +57,7 @@ export default function AnalyticsPage({ tab }: { tab: "screens" | "funnels" | "j
   const [funnelSteps, setFunnelSteps] = useState("");
   const [funnelResult, setFunnelResult] = useState<FunnelResponse | null>(null);
 
-  const dateParams = `start_date=${startDate}T00:00:00Z&end_date=${endDate}T23:59:59Z`;
+  const dateParams = `start_date=${startDate}&end_date=${endDate}`;
 
   const loadScreens = async () => {
     const res = await api<DataResponse<{ screens: ScreenEntry[] }>>(
@@ -86,8 +86,8 @@ export default function AnalyticsPage({ tab }: { tab: "screens" | "funnels" | "j
       {
         method: "POST",
         body: JSON.stringify({
-          start_date: `${startDate}T00:00:00Z`,
-          end_date: `${endDate}T23:59:59Z`,
+          start_date: startDate,
+          end_date: endDate,
           steps,
         }),
       },
