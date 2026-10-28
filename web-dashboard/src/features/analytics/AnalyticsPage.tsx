@@ -126,11 +126,25 @@ export default function AnalyticsPage({ tab }: { tab: "screens" | "funnels" | "j
             조회
           </button>
           {screens.length > 0 && (
-            <button onClick={() => downloadCsv(
-              `screens_${startDate}_${endDate}.csv`,
-              ["화면", "방문 수", "고유 사용자", "평균 체류시간(ms)", "이탈 수", "이탈률"],
-              screens.map((s) => [s.screen_id, s.view_count, s.unique_users, s.avg_duration_ms ?? "", s.bounce_count, (s.bounce_rate * 100).toFixed(1) + "%"]),
-            )} style={csvBtnStyle}>CSV</button>
+            <button
+              onClick={() =>
+                downloadCsv(
+                  `screens_${startDate}_${endDate}.csv`,
+                  ["화면", "방문 수", "고유 사용자", "평균 체류시간(ms)", "이탈 수", "이탈률"],
+                  screens.map((s) => [
+                    s.screen_id,
+                    s.view_count,
+                    s.unique_users,
+                    s.avg_duration_ms ?? "",
+                    s.bounce_count,
+                    (s.bounce_rate * 100).toFixed(1) + "%",
+                  ]),
+                )
+              }
+              style={csvBtnStyle}
+            >
+              CSV
+            </button>
           )}
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
@@ -171,11 +185,18 @@ export default function AnalyticsPage({ tab }: { tab: "screens" | "funnels" | "j
             조회
           </button>
           {transitions.length > 0 && (
-            <button onClick={() => downloadCsv(
-              `journeys_${startDate}_${endDate}.csv`,
-              ["출발 화면", "도착 화면", "전이 횟수"],
-              transitions.map((t) => [t.from_screen, t.to_screen, t.count]),
-            )} style={csvBtnStyle}>CSV</button>
+            <button
+              onClick={() =>
+                downloadCsv(
+                  `journeys_${startDate}_${endDate}.csv`,
+                  ["출발 화면", "도착 화면", "전이 횟수"],
+                  transitions.map((t) => [t.from_screen, t.to_screen, t.count]),
+                )
+              }
+              style={csvBtnStyle}
+            >
+              CSV
+            </button>
           )}
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
@@ -225,11 +246,24 @@ export default function AnalyticsPage({ tab }: { tab: "screens" | "funnels" | "j
             분석
           </button>
           {funnelResult && (
-            <button onClick={() => downloadCsv(
-              `funnel_${startDate}_${endDate}.csv`,
-              ["단계", "이벤트 키", "사용자 수", "세션 수", "전환율"],
-              funnelResult.steps.map((s) => [s.step, s.event_key, s.unique_users, s.unique_sessions, (s.conversion_rate * 100).toFixed(1) + "%"]),
-            )} style={csvBtnStyle}>CSV</button>
+            <button
+              onClick={() =>
+                downloadCsv(
+                  `funnel_${startDate}_${endDate}.csv`,
+                  ["단계", "이벤트 키", "사용자 수", "세션 수", "전환율"],
+                  funnelResult.steps.map((s) => [
+                    s.step,
+                    s.event_key,
+                    s.unique_users,
+                    s.unique_sessions,
+                    (s.conversion_rate * 100).toFixed(1) + "%",
+                  ]),
+                )
+              }
+              style={csvBtnStyle}
+            >
+              CSV
+            </button>
           )}
           {funnelResult && (
             <div>

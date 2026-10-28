@@ -148,16 +148,37 @@ export default function RetentionPage() {
         {data && (
           <button
             onClick={() => {
-              const headers = ["코호트 날짜", "코호트 크기", ...days.map((d) => `D${d} 수`), ...days.map((d) => `D${d} 비율`)];
+              const headers = [
+                "코호트 날짜",
+                "코호트 크기",
+                ...days.map((d) => `D${d} 수`),
+                ...days.map((d) => `D${d} 비율`),
+              ];
               const rows = data.cohorts.map((c) => [
-                c.date, c.cohort_size,
+                c.date,
+                c.cohort_size,
                 ...days.map((d) => c.retention[String(d)]?.count ?? ""),
-                ...days.map((d) => c.retention[String(d)] ? (c.retention[String(d)].rate * 100).toFixed(1) + "%" : ""),
+                ...days.map((d) =>
+                  c.retention[String(d)]
+                    ? (c.retention[String(d)].rate * 100).toFixed(1) + "%"
+                    : "",
+                ),
               ]);
               downloadCsv(`retention_${type}_${startDate}_${endDate}.csv`, headers, rows);
             }}
-            style={{ padding: "6px 16px", background: "#059669", color: "#fff", border: "none", borderRadius: 4, cursor: "pointer", fontSize: 13, marginLeft: 8 }}
-          >CSV</button>
+            style={{
+              padding: "6px 16px",
+              background: "#059669",
+              color: "#fff",
+              border: "none",
+              borderRadius: 4,
+              cursor: "pointer",
+              fontSize: 13,
+              marginLeft: 8,
+            }}
+          >
+            CSV
+          </button>
         )}
       </div>
 

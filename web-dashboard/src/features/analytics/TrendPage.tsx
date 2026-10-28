@@ -126,16 +126,44 @@ export default function TrendPage() {
     <div>
       <h2>시계열 추이</h2>
 
-      <div style={{ display: "flex", gap: 8, marginBottom: "1rem", flexWrap: "wrap", alignItems: "center" }}>
-        <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} style={inputStyle} />
-        <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} style={inputStyle} />
-        <select value={granularity} onChange={(e) => setGranularity(e.target.value)} style={inputStyle}>
+      <div
+        style={{
+          display: "flex",
+          gap: 8,
+          marginBottom: "1rem",
+          flexWrap: "wrap",
+          alignItems: "center",
+        }}
+      >
+        <input
+          type="date"
+          value={startDate}
+          onChange={(e) => setStartDate(e.target.value)}
+          style={inputStyle}
+        />
+        <input
+          type="date"
+          value={endDate}
+          onChange={(e) => setEndDate(e.target.value)}
+          style={inputStyle}
+        />
+        <select
+          value={granularity}
+          onChange={(e) => setGranularity(e.target.value)}
+          style={inputStyle}
+        >
           <option value="daily">일별</option>
           <option value="hourly">시간별</option>
         </select>
-        <select value={metric} onChange={(e) => setMetric(e.target.value as MetricKey)} style={inputStyle}>
+        <select
+          value={metric}
+          onChange={(e) => setMetric(e.target.value as MetricKey)}
+          style={inputStyle}
+        >
           {Object.entries(metricLabels).map(([key, label]) => (
-            <option key={key} value={key}>{label}</option>
+            <option key={key} value={key}>
+              {label}
+            </option>
           ))}
         </select>
         <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 14 }}>
@@ -144,17 +172,51 @@ export default function TrendPage() {
         </label>
       </div>
 
-      <div style={{ display: "flex", gap: 8, marginBottom: "1rem", flexWrap: "wrap", alignItems: "center" }}>
-        <input value={eventKey} onChange={(e) => setEventKey(e.target.value)} placeholder="이벤트 키 (선택)" style={{ ...inputStyle, width: 180 }} />
-        <input value={propertyName} onChange={(e) => setPropertyName(e.target.value)} placeholder="속성 이름 (선택)" style={{ ...inputStyle, width: 150 }} />
-        <input value={propertyValue} onChange={(e) => setPropertyValue(e.target.value)} placeholder="속성 값 (선택)" style={{ ...inputStyle, width: 150 }} />
-        <button onClick={() => void load()} style={btnStyle}>조회</button>
+      <div
+        style={{
+          display: "flex",
+          gap: 8,
+          marginBottom: "1rem",
+          flexWrap: "wrap",
+          alignItems: "center",
+        }}
+      >
+        <input
+          value={eventKey}
+          onChange={(e) => setEventKey(e.target.value)}
+          placeholder="이벤트 키 (선택)"
+          style={{ ...inputStyle, width: 180 }}
+        />
+        <input
+          value={propertyName}
+          onChange={(e) => setPropertyName(e.target.value)}
+          placeholder="속성 이름 (선택)"
+          style={{ ...inputStyle, width: 150 }}
+        />
+        <input
+          value={propertyValue}
+          onChange={(e) => setPropertyValue(e.target.value)}
+          placeholder="속성 값 (선택)"
+          style={{ ...inputStyle, width: 150 }}
+        />
+        <button onClick={() => void load()} style={btnStyle}>
+          조회
+        </button>
         {chartData.length > 0 && (
-          <button onClick={() => downloadCsv(
-            `trend_${startDate}_${endDate}.csv`,
-            compare ? ["날짜", "이번 기간", "이전 기간"] : ["날짜", metricLabels[metric]],
-            chartData.map((r) => compare ? [r.label, r.current, r.previous ?? 0] : [r.label, r.current]),
-          )} style={{ ...btnStyle, background: "#059669" }}>CSV</button>
+          <button
+            onClick={() =>
+              downloadCsv(
+                `trend_${startDate}_${endDate}.csv`,
+                compare ? ["날짜", "이번 기간", "이전 기간"] : ["날짜", metricLabels[metric]],
+                chartData.map((r) =>
+                  compare ? [r.label, r.current, r.previous ?? 0] : [r.label, r.current],
+                ),
+              )
+            }
+            style={{ ...btnStyle, background: "#059669" }}
+          >
+            CSV
+          </button>
         )}
       </div>
 
@@ -171,8 +233,15 @@ export default function TrendPage() {
           {changeRate !== null && (
             <div style={summaryCard}>
               <div style={{ fontSize: 12, color: "#6b7280" }}>변화율</div>
-              <div style={{ fontSize: 20, fontWeight: 700, color: changeRate >= 0 ? "#059669" : "#dc2626" }}>
-                {changeRate >= 0 ? "+" : ""}{changeRate.toFixed(1)}%
+              <div
+                style={{
+                  fontSize: 20,
+                  fontWeight: 700,
+                  color: changeRate >= 0 ? "#059669" : "#dc2626",
+                }}
+              >
+                {changeRate >= 0 ? "+" : ""}
+                {changeRate.toFixed(1)}%
               </div>
             </div>
           )}
@@ -180,7 +249,14 @@ export default function TrendPage() {
       )}
 
       {chartData.length > 0 && (
-        <div style={{ background: "#fff", borderRadius: 8, padding: "1rem", boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }}>
+        <div
+          style={{
+            background: "#fff",
+            borderRadius: 8,
+            padding: "1rem",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+          }}
+        >
           <ResponsiveContainer width="100%" height={400}>
             <LineChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />

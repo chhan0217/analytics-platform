@@ -3,12 +3,14 @@ export function downloadCsv(filename: string, headers: string[], rows: (string |
   const csvContent = [
     headers.join(","),
     ...rows.map((row) =>
-      row.map((cell) => {
-        const str = String(cell);
-        return str.includes(",") || str.includes('"') || str.includes("\n")
-          ? `"${str.replace(/"/g, '""')}"`
-          : str;
-      }).join(","),
+      row
+        .map((cell) => {
+          const str = String(cell);
+          return str.includes(",") || str.includes('"') || str.includes("\n")
+            ? `"${str.replace(/"/g, '""')}"`
+            : str;
+        })
+        .join(","),
     ),
   ].join("\n");
 

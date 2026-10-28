@@ -137,13 +137,25 @@ export default function EventSummaryPage() {
           {events.length > 0 && (
             <button
               type="button"
-              onClick={() => downloadCsv(
-                `events_${startDate}_${endDate}.csv`,
-                ["이벤트 키", "횟수", "사용자 수", "세션 수"],
-                events.map((e) => [e.event_key, e.count, e.unique_users, e.unique_sessions]),
-              )}
-              style={{ padding: "8px 16px", background: "#059669", color: "#fff", border: "none", borderRadius: 4, cursor: "pointer", marginLeft: 8 }}
-            >CSV</button>
+              onClick={() =>
+                downloadCsv(
+                  `events_${startDate}_${endDate}.csv`,
+                  ["이벤트 키", "횟수", "사용자 수", "세션 수"],
+                  events.map((e) => [e.event_key, e.count, e.unique_users, e.unique_sessions]),
+                )
+              }
+              style={{
+                padding: "8px 16px",
+                background: "#059669",
+                color: "#fff",
+                border: "none",
+                borderRadius: 4,
+                cursor: "pointer",
+                marginLeft: 8,
+              }}
+            >
+              CSV
+            </button>
           )}
         </form>
 
