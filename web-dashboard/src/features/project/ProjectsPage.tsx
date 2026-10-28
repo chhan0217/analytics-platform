@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { formatKstDateTime } from "../../utils/date";
 import { api } from "../../api/client";
 import { useProject } from "../../context/ProjectContext";
 import type { ListResponse, Project, DataResponse } from "../../api/types";
@@ -97,7 +98,7 @@ export default function ProjectsPage() {
                 </span>
               </td>
               <td style={{ padding: 8, fontSize: 13, color: "#666" }}>
-                {new Date(p.created_at).toLocaleString()}
+                {formatKstDateTime(p.created_at)}
               </td>
               <td style={{ padding: 8 }}>
                 {selectedProject?.id === p.id ? (

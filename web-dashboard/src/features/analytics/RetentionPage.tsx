@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
+import { todayKst, daysAgoKst } from "../../utils/date";
 import { api } from "../../api/client";
 import { useProject } from "../../context/ProjectContext";
 import type { DataResponse, RetentionResponse } from "../../api/types";
 import { downloadCsv } from "../../utils/csv";
 import DateRangeFilter from "../../components/DateRangeFilter";
 
-const today = new Date();
-const defaultStart = new Date(today.getTime() - 30 * 86400000).toISOString().slice(0, 10);
-const defaultEnd = today.toISOString().slice(0, 10);
+const defaultStart = daysAgoKst(30);
+const defaultEnd = todayKst();
 
 function rateColor(rate: number): string {
   if (rate >= 0.5) return "#15803d";

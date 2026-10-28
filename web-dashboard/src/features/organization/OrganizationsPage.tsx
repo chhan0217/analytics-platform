@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { formatKstDateTime } from "../../utils/date";
 import { api } from "../../api/client";
 import { useProject } from "../../context/ProjectContext";
 import type { ListResponse, Organization, DataResponse } from "../../api/types";
@@ -67,7 +68,7 @@ export default function OrganizationsPage() {
             <tr key={org.id} style={{ borderBottom: "1px solid #e5e7eb" }}>
               <td style={{ padding: 8 }}>{org.name}</td>
               <td style={{ padding: 8, fontSize: 13, color: "#666" }}>
-                {new Date(org.created_at).toLocaleString()}
+                {formatKstDateTime(org.created_at)}
               </td>
               <td style={{ padding: 8 }}>
                 {selectedOrg?.id === org.id ? (

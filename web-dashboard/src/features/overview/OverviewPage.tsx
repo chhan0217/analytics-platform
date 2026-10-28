@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { todayKst, daysAgoKst } from "../../utils/date";
 import { api } from "../../api/client";
 import { useProject } from "../../context/ProjectContext";
 import type { DataResponse } from "../../api/types";
@@ -31,10 +32,7 @@ export default function OverviewPage() {
 
   useEffect(() => {
     if (!selectedProject) return;
-    const end = new Date();
-    const start = new Date(end.getTime() - days * 24 * 60 * 60 * 1000);
-    const fmt = (d: Date) => d.toISOString().split("T")[0];
-    const params = `start_date=${fmt(start)}&end_date=${fmt(end)}`;
+    const params = `start_date=${daysAgoKst(days)}&end_date=${todayKst()}`;
     const pid = selectedProject.id;
 
     api<DataResponse<OverviewData>>(`/admin/projects/${pid}/analytics/overview?${params}`).then(

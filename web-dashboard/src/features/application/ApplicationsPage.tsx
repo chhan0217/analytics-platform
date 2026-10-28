@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { formatKstDateTime } from "../../utils/date";
 import { api } from "../../api/client";
 import { useProject } from "../../context/ProjectContext";
 import type {
@@ -199,7 +200,7 @@ export default function ApplicationsPage() {
                       </span>
                     </td>
                     <td style={{ padding: 4, color: "#666" }}>
-                      {new Date(c.created_at).toLocaleString()}
+                      {formatKstDateTime(c.created_at)}
                     </td>
                     <td style={{ padding: 4, display: "flex", gap: 8 }}>
                       <button

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatKstDateTime } from "../../utils/date";
 import { api } from "../../api/client";
 import { useProject } from "../../context/ProjectContext";
 import type { ListResponse } from "../../api/types";
@@ -125,7 +126,7 @@ export default function UsersPage() {
                 </div>
               )}
               <div>
-                <strong>생성일:</strong> {new Date(u.created_at).toLocaleString()}
+                <strong>생성일:</strong> {formatKstDateTime(u.created_at)}
               </div>
             </div>
           ))}
@@ -142,9 +143,9 @@ export default function UsersPage() {
               const status = s.ended_at ? "종료" : isExpired ? "종료 (추정)" : "활성";
               const statusColor = s.ended_at ? "#6b7280" : isExpired ? "#f59e0b" : "#10b981";
               const effectiveEndedAt = s.ended_at
-                ? new Date(s.ended_at).toLocaleString()
+                ? formatKstDateTime(s.ended_at)
                 : isExpired
-                  ? new Date(lastEvent + 30 * 60 * 1000).toLocaleString()
+                  ? formatKstDateTime(new Date(lastEvent + 30 * 60 * 1000).toISOString())
                   : "-";
 
               return (
@@ -166,10 +167,10 @@ export default function UsersPage() {
                     <span style={{ color: statusColor, fontWeight: 600 }}>{status}</span>
                   </div>
                   <div style={{ color: "#666", marginTop: 4 }}>
-                    시작: {new Date(s.started_at).toLocaleString()}
+                    시작: {formatKstDateTime(s.started_at)}
                   </div>
                   <div style={{ color: "#666" }}>
-                    마지막: {new Date(s.last_event_at).toLocaleString()}
+                    마지막: {formatKstDateTime(s.last_event_at)}
                   </div>
                   <div style={{ color: "#666" }}>종료: {effectiveEndedAt}</div>
                 </div>

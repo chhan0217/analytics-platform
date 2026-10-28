@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { todayKst, daysAgoKst } from "../../utils/date";
 import { api } from "../../api/client";
 import { useProject } from "../../context/ProjectContext";
 import type { DataResponse } from "../../api/types";
@@ -48,10 +49,8 @@ export default function AnalyticsPage({ tab }: { tab: "screens" | "funnels" | "j
   const { selectedProject } = useProject();
   const projectId = selectedProject?.id;
 
-  const [startDate, setStartDate] = useState(
-    () => new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-  );
-  const [endDate, setEndDate] = useState(() => new Date().toISOString().split("T")[0]);
+  const [startDate, setStartDate] = useState(() => daysAgoKst(7));
+  const [endDate, setEndDate] = useState(() => todayKst());
 
   const [screens, setScreens] = useState<ScreenEntry[]>([]);
   const [transitions, setTransitions] = useState<TransitionEntry[]>([]);

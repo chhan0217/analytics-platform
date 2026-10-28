@@ -9,6 +9,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import { todayKst, daysAgoKst } from "../../utils/date";
 import { api } from "../../api/client";
 import { downloadCsv } from "../../utils/csv";
 import { useProject } from "../../context/ProjectContext";
@@ -51,10 +52,8 @@ export default function TrendPage() {
   const { selectedProject } = useProject();
   const projectId = selectedProject?.id;
 
-  const [startDate, setStartDate] = useState(
-    () => new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-  );
-  const [endDate, setEndDate] = useState(() => new Date().toISOString().split("T")[0]);
+  const [startDate, setStartDate] = useState(() => daysAgoKst(7));
+  const [endDate, setEndDate] = useState(() => todayKst());
   const [granularity, setGranularity] = useState("daily");
   const [eventKey, setEventKey] = useState("");
   const [propertyName, setPropertyName] = useState("");

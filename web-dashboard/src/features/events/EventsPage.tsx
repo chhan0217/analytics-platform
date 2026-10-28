@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { todayKst, daysAgoKst, formatKstDateTime } from "../../utils/date";
 import { api } from "../../api/client";
 import { useProject } from "../../context/ProjectContext";
 import DateRangeFilter from "../../components/DateRangeFilter";
@@ -10,10 +11,8 @@ export default function EventsPage() {
   const [events, setEvents] = useState<AnalyticsEvent[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
-  const [startDate, setStartDate] = useState(
-    () => new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-  );
-  const [endDate, setEndDate] = useState(() => new Date().toISOString().split("T")[0]);
+  const [startDate, setStartDate] = useState(() => daysAgoKst(7));
+  const [endDate, setEndDate] = useState(() => todayKst());
   const [eventKeyFilter, setEventKeyFilter] = useState("");
   const [selectedEvent, setSelectedEvent] = useState<AnalyticsEvent | null>(null);
   const [loaded, setLoaded] = useState(false);
@@ -92,7 +91,7 @@ export default function EventsPage() {
                   <code>{evt.event_key}</code>
                 </td>
                 <td style={{ padding: 6, color: "#666" }}>
-                  {new Date(evt.occurred_at).toLocaleString()}
+                  {formatKstDateTime(evt.occurred_at)}
                 </td>
                 <td style={{ padding: 6, color: "#666", fontSize: 11 }}>
                   {evt.session_id.slice(0, 8)}...
@@ -141,10 +140,10 @@ export default function EventsPage() {
             <strong>이벤트 키:</strong> {selectedEvent.event_key}
           </div>
           <div style={{ marginBottom: 8 }}>
-            <strong>발생:</strong> {new Date(selectedEvent.occurred_at).toLocaleString()}
+            <strong>발생:</strong> {formatKstDateTime(selectedEvent.occurred_at)}
           </div>
           <div style={{ marginBottom: 8 }}>
-            <strong>수신:</strong> {new Date(selectedEvent.received_at).toLocaleString()}
+            <strong>수신:</strong> {formatKstDateTime(selectedEvent.received_at)}
           </div>
           <div style={{ marginBottom: 8 }}>
             <strong>세션:</strong> <code style={{ fontSize: 11 }}>{selectedEvent.session_id}</code>

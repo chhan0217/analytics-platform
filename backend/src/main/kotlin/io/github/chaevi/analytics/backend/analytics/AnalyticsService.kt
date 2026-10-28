@@ -1,5 +1,7 @@
 package io.github.chaevi.analytics.backend.analytics
 
+import io.github.chaevi.analytics.backend.common.parseEndInstant
+import io.github.chaevi.analytics.backend.common.parseStartInstant
 import io.github.chaevi.analytics.backend.ingest.AnalyticsEventTable
 import kotlinx.datetime.Instant
 import org.jetbrains.exposed.sql.Op
@@ -301,8 +303,8 @@ class AnalyticsService {
         request: FunnelRequest,
     ): FunnelResponse {
         val projUuid = UUID.fromString(projectId)
-        val start = Instant.parse(request.startDate)
-        val end = Instant.parse(request.endDate)
+        val start = parseStartInstant(request.startDate)
+        val end = parseEndInstant(request.endDate)
 
         return transaction {
             var baseCondition: Op<Boolean> =

@@ -1,3 +1,5 @@
+import { todayKst, daysAgoKst } from "../utils/date";
+
 interface DateRangeFilterProps {
   startDate: string;
   endDate: string;
@@ -15,14 +17,6 @@ const presets = [
   { label: "90일", days: 90 },
 ];
 
-function daysAgo(n: number): string {
-  return new Date(Date.now() - n * 86400000).toISOString().split("T")[0];
-}
-
-function today(): string {
-  return new Date().toISOString().split("T")[0];
-}
-
 export default function DateRangeFilter({
   startDate,
   endDate,
@@ -33,8 +27,8 @@ export default function DateRangeFilter({
   children,
 }: DateRangeFilterProps) {
   const applyPreset = (days: number) => {
-    onStartDateChange(daysAgo(days));
-    onEndDateChange(today());
+    onStartDateChange(daysAgoKst(days));
+    onEndDateChange(todayKst());
   };
 
   return (
