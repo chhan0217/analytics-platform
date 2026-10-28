@@ -14,6 +14,14 @@ import kotlinx.datetime.Instant
 @Suppress("LongMethod")
 fun Route.analyticsRoutes(service: AnalyticsService = AnalyticsService()) {
     route("/projects/{projectId}/analytics") {
+        get("/active-users") {
+            val projectId = call.requireProjectId()
+            val date = call.request.queryParameters["date"] ?: todayKst()
+            val applicationId = call.request.queryParameters["application_id"]
+            val response = service.activeUsers(projectId, date, applicationId)
+            call.respond(DataResponse(response))
+        }
+
         get("/overview") {
             val projectId = call.requireProjectId()
             val (start, end) = parseDateRange(call)
@@ -43,6 +51,23 @@ fun Route.analyticsRoutes(service: AnalyticsService = AnalyticsService()) {
             val request = call.receive<FunnelRequest>()
             val response = service.funnel(projectId, request)
             call.respond(DataResponse(response))
+        }
+
+        get("/trend") {
+            val projectId = call.requireProjectId()
+            val (start, end) = parseDateRange(call)
+            val query =
+                TrendQuery(
+                    projectId = projectId,
+                    start = start,
+                    end = end,
+                    granularity = call.request.queryParameters["granularity"] ?: "daily",
+                    eventKey = call.request.queryParameters["event_key"],
+                    propertyName = call.request.queryParameters["property_name"],
+                    propertyValue = call.request.queryParameters["property_value"],
+                    applicationId = call.request.queryParameters["application_id"],
+                )
+            call.respond(DataResponse(service.trend(query)))
         }
 
         get("/retention") {

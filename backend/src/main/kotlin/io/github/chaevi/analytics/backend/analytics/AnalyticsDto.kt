@@ -27,6 +27,8 @@ data class ScreenEntry(
     val viewCount: Long,
     val uniqueUsers: Long,
     val avgDurationMs: Long? = null,
+    val bounceCount: Long = 0,
+    val bounceRate: Double = 0.0,
 )
 
 @Serializable
@@ -120,4 +122,39 @@ data class CohortEntry(
 data class RetentionValue(
     val count: Long,
     val rate: Double,
+)
+
+data class TrendQuery(
+    val projectId: String,
+    val start: kotlinx.datetime.Instant,
+    val end: kotlinx.datetime.Instant,
+    val granularity: String,
+    val eventKey: String?,
+    val propertyName: String?,
+    val propertyValue: String?,
+    val applicationId: String?,
+)
+
+@Serializable
+data class TrendResponse(
+    val granularity: String,
+    val dataPoints: List<TrendDataPoint>,
+    val period: PeriodInfo,
+)
+
+@Serializable
+data class TrendDataPoint(
+    val date: String,
+    val eventCount: Long,
+    val sessionCount: Long,
+    val userCount: Long,
+)
+
+@Serializable
+data class ActiveUsersResponse(
+    val date: String,
+    val dau: Long,
+    val wau: Long,
+    val mau: Long,
+    val stickiness: Double,
 )
