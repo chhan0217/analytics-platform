@@ -11,6 +11,7 @@ import EventSummaryPage from "./features/events/EventSummaryPage";
 import UsersPage from "./features/users/UsersPage";
 import AnalyticsPage from "./features/analytics/AnalyticsPage";
 import RetentionPage from "./features/analytics/RetentionPage";
+import TrendPage from "./features/analytics/TrendPage";
 import OrganizationsPage from "./features/organization/OrganizationsPage";
 import ProjectsPage from "./features/project/ProjectsPage";
 
@@ -41,6 +42,7 @@ export default function App() {
           <Route path="/screens" element={<AnalyticsPage tab="screens" />} />
           <Route path="/funnels" element={<AnalyticsPage tab="funnels" />} />
           <Route path="/journeys" element={<AnalyticsPage tab="journeys" />} />
+          <Route path="/trend" element={<TrendPage />} />
           <Route path="/retention" element={<RetentionPage />} />
           <Route path="/users" element={<UsersPage />} />
           <Route path="/settings/organizations" element={<OrganizationsPage />} />

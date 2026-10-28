@@ -9,6 +9,13 @@ interface OverviewData {
   total_users: number;
 }
 
+interface ActiveUsersData {
+  dau: number;
+  wau: number;
+  mau: number;
+  stickiness: number;
+}
+
 interface ScreenItem {
   screen_id: string;
   view_count: number;
@@ -18,6 +25,7 @@ interface ScreenItem {
 export default function OverviewPage() {
   const { selectedProject } = useProject();
   const [overview, setOverview] = useState<OverviewData | null>(null);
+  const [activeUsers, setActiveUsers] = useState<ActiveUsersData | null>(null);
   const [screens, setScreens] = useState<ScreenItem[]>([]);
   const [days, setDays] = useState(7);
 
@@ -30,6 +38,9 @@ export default function OverviewPage() {
 
     api<DataResponse<OverviewData>>(`/admin/projects/${pid}/analytics/overview?${params}`).then(
       (res) => setOverview(res.data),
+    );
+    api<DataResponse<ActiveUsersData>>(`/admin/projects/${pid}/analytics/active-users`).then(
+      (res) => setActiveUsers(res.data),
     );
     api<DataResponse<{ screens: ScreenItem[] }>>(
       `/admin/projects/${pid}/analytics/screens?${params}`,
@@ -53,11 +64,21 @@ export default function OverviewPage() {
         </select>
       </div>
 
-      {/* 핵심 지표 카드 */}
-      <div style={{ display: "flex", gap: 16, marginTop: 20 }}>
-        <Card label="총 이벤트" value={overview.total_events.toLocaleString()} />
-        <Card label="총 세션" value={overview.total_sessions.toLocaleString()} />
-        <Card label="총 사용자" value={overview.total_users.toLocaleString()} />
+      {/* 활성 사용자 지표 */}
+      {activeUsers && (
+        <div style={{ display: "flex", gap: 16, marginTop: 20 }}>
+          <Card label="DAU (오늘)" value={activeUsers.dau.toLocaleString()} />
+          <Card label="WAU (7일)" value={activeUsers.wau.toLocaleString()} />
+          <Card label="MAU (30일)" value={activeUsers.mau.toLocaleString()} />
+          <Card label="스티키니스" value={`${(activeUsers.stickiness * 100).toFixed(1)}%`} />
+        </div>
+      )}
+
+      {/* 기간 내 집계 */}
+      <div style={{ display: "flex", gap: 16, marginTop: 16 }}>
+        <Card label="이벤트" value={overview.total_events.toLocaleString()} />
+        <Card label="세션" value={overview.total_sessions.toLocaleString()} />
+        <Card label="사용자" value={overview.total_users.toLocaleString()} />
       </div>
 
       {/* 화면별 통계 */}
