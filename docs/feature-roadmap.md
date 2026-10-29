@@ -112,17 +112,43 @@
 - schema_version별 검증 규칙 적용
 - 속성 타입 검증 (STRING/INTEGER/FLOAT 등)
 
+### 세션 리플레이 (신규, 진행 중)
+
+설계 문서: `docs/session-replay-design.md`
+
+구현 완료:
+- 세션 목록 API (`GET /admin/projects/{id}/sessions`)
+- 세션 타임라인 API (`GET /admin/projects/{id}/sessions/{id}/replay`)
+- 대시보드 세션 목록 페이지 (날짜 필터, 페이지네이션)
+- 대시보드 타임라인 뷰어 (재생 컨트롤 0.5x~4x, 이벤트 패널)
+- 앱 화면 에디터 (JSON 제작 + 실시간 미리보기 + CRUD)
+- LayoutWireframe 렌더러 (column, row, header, text, button, card, list, navigation, imagePlaceholder, spacer, divider)
+- 렌더러 속성: padding, spacing, distribution, alignment, underline, active, width, height
+- header/navigation 자동 고정 + 내부 스크롤
+- JSON 파일 업로드 기능
+- 미리보기 에러 바운더리
+
+설계 변경:
+- SDK 자동 캡처 (Compose Semantics Tree) → **폐기** (캡처 품질 한계, Compose 내부 API 의존)
+- 수동 JSON 에디터 방식으로 확정 (`screen_layouts` 테이블)
+- SDK 캡처 관련 코드 전부 제거 완료 (ScreenCapturer, ScreenCaptureManager, HttpTemplateSender, enableReplay)
+
+미구현:
+- 리플레이 ↔ 앱 화면 연동 (screen_id 매칭)
+- 인터랙션 하이라이트 (button_click → 해당 버튼 강조)
+
 ## 3. 다음 작업 우선순위 제안
 
 | 순서 | 작업 | 사유 |
 |------|------|------|
-| 1 | ~~대시보드 UI 리팩토링~~ | ~~헤더 프로젝트 선택 + 사이드바 메뉴~~ → **완료** |
-| 2 | ~~텍소노미 설계서 + 이벤트 등록~~ | ~~전체 화면/이벤트/속성 정의 + 서버 등록~~ → **완료** |
-| 3 | ~~TrackScreenEvents 파라미터 제거~~ | ~~screen_id 정규화~~ → **완료** |
-| 4 | ~~이벤트별 집계 API~~ | ~~이벤트별 횟수/사용자 수~~ → **완료** |
-| 5 | ~~화면 체류시간 계산~~ | ~~screen_leave 기반 체류시간~~ → **완료** |
-| 6 | ~~조직/프로젝트 관리 UX~~ | ~~온보딩 + 설정 페이지~~ → **완료** |
-| 7 | ~~parseDateRange 버그 수정~~ | ~~날짜만 넘기면 파싱 실패~~ → **완료** |
-| 8 | ~~리텐션 분석 API + 대시보드~~ | ~~new/active 타입, 히트맵~~ → **완료** |
-| 9 | ~~시계열 추이 API + 차트~~ | ~~이벤트/사용자 수 시간대별 변화~~ → **완료** |
-| 10 | 텍소노미 필수 속성 검증 | 데이터 품질 보장 |
+| 1 | ~~대시보드 UI 리팩토링~~ | → **완료** |
+| 2 | ~~텍소노미 설계서 + 이벤트 등록~~ | → **완료** |
+| 3 | ~~TrackScreenEvents 파라미터 제거~~ | → **완료** |
+| 4 | ~~이벤트별 집계 API~~ | → **완료** |
+| 5 | ~~화면 체류시간 계산~~ | → **완료** |
+| 6 | ~~조직/프로젝트 관리 UX~~ | → **완료** |
+| 7 | ~~parseDateRange 버그 수정~~ | → **완료** |
+| 8 | ~~리텐션 분석 API + 대시보드~~ | → **완료** |
+| 9 | ~~시계열 추이 API + 차트~~ | → **완료** |
+| 10 | 세션 리플레이 ↔ 앱 화면 연동 | screen_id 매칭 + 인터랙션 하이라이트 |
+| 11 | 텍소노미 필수 속성 검증 | 데이터 품질 보장 |

@@ -366,7 +366,109 @@
 
 ---
 
-## 9. 에러 코드 체계
+## 9. 관리자 API — 세션 리플레이
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| `GET` | `/admin/projects/{projectId}/sessions` | 세션 목록 |
+| `GET` | `/admin/projects/{projectId}/sessions/{sessionId}/replay` | 세션 타임라인 (리플레이용) |
+
+### 세션 목록 파라미터
+
+| 파라미터 | 타입 | 설명 |
+|---|---|---|
+| `start_date` | ISO-8601 | 시작일 (필수) |
+| `end_date` | ISO-8601 | 종료일 (필수) |
+| `application_id` | UUID | 앱 필터 (선택) |
+| `page` | integer | 페이지 번호 (기본 1) |
+| `size` | integer | 페이지 크기 (기본 20) |
+
+### 세션 목록 응답
+
+```json
+{
+  "data": [
+    {
+      "session_id": "uuid",
+      "anonymous_id": "uuid",
+      "external_user_id": "user@example.com",
+      "started_at": "2026-10-29T10:00:00Z",
+      "ended_at": "2026-10-29T10:15:00Z",
+      "last_event_at": "2026-10-29T10:14:30Z",
+      "event_count": 23,
+      "screen_count": 5,
+      "device": { "os_name": "Android", "os_version": "16", "device_model": "SM-S918N" }
+    }
+  ],
+  "meta": { "total": 142, "page": 1, "page_size": 20 }
+}
+```
+
+### 세션 리플레이 응답
+
+```json
+{
+  "data": {
+    "session": {
+      "session_id": "uuid",
+      "anonymous_id": "uuid",
+      "started_at": "...",
+      "ended_at": "...",
+      "device": { ... }
+    },
+    "timeline": [
+      {
+        "event_id": "uuid",
+        "event_key": "screen_view",
+        "occurred_at": "2026-10-29T10:00:00Z",
+        "screen_id": "home",
+        "duration_ms": 5200
+      },
+      {
+        "event_id": "uuid",
+        "event_key": "button_click",
+        "occurred_at": "2026-10-29T10:00:03Z",
+        "properties": { "button_id": "search" }
+      }
+    ]
+  }
+}
+```
+
+---
+
+## 10. 관리자 API — 화면 레이아웃
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| `GET` | `/admin/projects/{projectId}/screen-layouts` | 레이아웃 목록 |
+| `POST` | `/admin/projects/{projectId}/screen-layouts` | 레이아웃 생성 |
+| `GET` | `/admin/projects/{projectId}/screen-layouts/{layoutId}` | 레이아웃 상세 (JSON 포함) |
+| `PATCH` | `/admin/projects/{projectId}/screen-layouts/{layoutId}` | 레이아웃 수정 |
+| `DELETE` | `/admin/projects/{projectId}/screen-layouts/{layoutId}` | 레이아웃 삭제 |
+
+### 레이아웃 생성 요청
+
+```json
+{
+  "screen_id": "mypage",
+  "display_name": "마이페이지",
+  "layout_json": "{ ... JSON 문자열 ... }"
+}
+```
+
+### 레이아웃 수정 요청
+
+```json
+{
+  "display_name": "마이페이지 (수정)",
+  "layout_json": "{ ... JSON 문자열 ... }"
+}
+```
+
+---
+
+## 11. 에러 코드 체계
 
 ### 공통
 | code | 설명 |

@@ -13,7 +13,9 @@ const analysisItems = [
   { to: "/journeys", label: "여정" },
   { to: "/trend", label: "시계열 추이" },
   { to: "/retention", label: "리텐션" },
+  { to: "/sessions", label: "세션 리플레이" },
   { to: "/users", label: "사용자" },
+  { to: "/app-screens", label: "앱 화면" },
 ];
 
 const settingsItems = [
