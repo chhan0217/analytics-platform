@@ -2,6 +2,8 @@ package io.github.chaevi.analytics.backend.analytics
 
 import io.github.chaevi.analytics.backend.common.ApiException
 import io.github.chaevi.analytics.backend.common.DataResponse
+import io.github.chaevi.analytics.backend.common.parseEndInstant
+import io.github.chaevi.analytics.backend.common.parseStartInstant
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
@@ -116,12 +118,5 @@ private fun parseDateRange(call: io.ktor.server.routing.RoutingCall): Pair<Insta
     val endDate =
         call.request.queryParameters["end_date"]
             ?: throw ApiException("VALIDATION_ERROR", HttpStatusCode.BadRequest, "end_date는 필수입니다")
-    return Pair(parseInstant(startDate), parseInstant(endDate))
+    return Pair(parseStartInstant(startDate), parseEndInstant(endDate))
 }
-
-private fun parseInstant(value: String): Instant =
-    if (value.contains("T")) {
-        Instant.parse(value)
-    } else {
-        Instant.parse("${value}T00:00:00Z")
-    }

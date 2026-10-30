@@ -1,12 +1,16 @@
 import { useEffect, useState } from "react";
+import { todayKst, daysAgoKst } from "../../utils/date";
 import { api } from "../../api/client";
 import { useProject } from "../../context/ProjectContext";
 import type { DataResponse, RetentionResponse } from "../../api/types";
 import { downloadCsv } from "../../utils/csv";
+import DateRangeFilter from "../../components/DateRangeFilter";
+import LoadingState from "../../components/LoadingState";
+import ErrorState from "../../components/ErrorState";
+import EmptyState from "../../components/EmptyState";
 
-const today = new Date();
-const defaultStart = new Date(today.getTime() - 30 * 86400000).toISOString().slice(0, 10);
-const defaultEnd = today.toISOString().slice(0, 10);
+const defaultStart = daysAgoKst(30);
+const defaultEnd = todayKst();
 
 function rateColor(rate: number): string {
   if (rate >= 0.5) return "#15803d";
@@ -34,15 +38,19 @@ export default function RetentionPage() {
   const [retentionDays, setRetentionDays] = useState("1,7,30");
   const [data, setData] = useState<RetentionResponse | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const load = async () => {
     if (!selectedProject) return;
     setLoading(true);
+    setError(null);
     try {
       const res = await api<DataResponse<RetentionResponse>>(
         `/admin/projects/${selectedProject.id}/analytics/retention?start_date=${startDate}&end_date=${endDate}&type=${type}&retention_days=${retentionDays}`,
       );
       setData(res.data);
+    } catch {
+      setError("리텐션 데이터를 불러오지 못했습니다.");
     } finally {
       setLoading(false);
     }
@@ -61,90 +69,28 @@ export default function RetentionPage() {
     <div>
       <h2 style={{ marginTop: 0 }}>리텐션 분석</h2>
 
-      {/* 필터 */}
-      <div
-        style={{
-          display: "flex",
-          gap: 12,
-          marginBottom: "1.5rem",
-          alignItems: "center",
-          flexWrap: "wrap",
-        }}
+      <DateRangeFilter
+        startDate={startDate}
+        endDate={endDate}
+        onStartDateChange={setStartDate}
+        onEndDateChange={setEndDate}
+        onSearch={load}
+        loading={loading}
       >
-        <label style={{ fontSize: 13 }}>
-          타입:
-          <select
-            value={type}
-            onChange={(e) => setType(e.target.value as "new" | "active")}
-            style={{
-              marginLeft: 4,
-              padding: "4px 8px",
-              borderRadius: 4,
-              border: "1px solid #d1d5db",
-            }}
-          >
-            <option value="new">신규 사용자</option>
-            <option value="active">활성 사용자</option>
-          </select>
-        </label>
-        <label style={{ fontSize: 13 }}>
-          시작:
-          <input
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            style={{
-              marginLeft: 4,
-              padding: "4px 8px",
-              borderRadius: 4,
-              border: "1px solid #d1d5db",
-            }}
-          />
-        </label>
-        <label style={{ fontSize: 13 }}>
-          종료:
-          <input
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            style={{
-              marginLeft: 4,
-              padding: "4px 8px",
-              borderRadius: 4,
-              border: "1px solid #d1d5db",
-            }}
-          />
-        </label>
-        <label style={{ fontSize: 13 }}>
-          D-N:
-          <input
-            value={retentionDays}
-            onChange={(e) => setRetentionDays(e.target.value)}
-            placeholder="1,7,30"
-            style={{
-              marginLeft: 4,
-              padding: "4px 8px",
-              borderRadius: 4,
-              border: "1px solid #d1d5db",
-              width: 120,
-            }}
-          />
-        </label>
-        <button
-          onClick={load}
-          disabled={loading}
-          style={{
-            padding: "6px 16px",
-            background: "#4f46e5",
-            color: "#fff",
-            border: "none",
-            borderRadius: 4,
-            cursor: "pointer",
-            fontSize: 13,
-          }}
+        <select
+          value={type}
+          onChange={(e) => setType(e.target.value as "new" | "active")}
+          style={filterSelect}
         >
-          {loading ? "조회 중..." : "조회"}
-        </button>
+          <option value="new">신규 사용자</option>
+          <option value="active">활성 사용자</option>
+        </select>
+        <input
+          value={retentionDays}
+          onChange={(e) => setRetentionDays(e.target.value)}
+          placeholder="D-N (1,7,30)"
+          style={{ ...filterSelect, width: 120 }}
+        />
         {data && (
           <button
             onClick={() => {
@@ -154,33 +100,26 @@ export default function RetentionPage() {
                 ...days.map((d) => `D${d} 수`),
                 ...days.map((d) => `D${d} 비율`),
               ];
-              const rows = data.cohorts.map((c) => [
-                c.date,
-                c.cohort_size,
-                ...days.map((d) => c.retention[String(d)]?.count ?? ""),
-                ...days.map((d) =>
-                  c.retention[String(d)]
-                    ? (c.retention[String(d)].rate * 100).toFixed(1) + "%"
-                    : "",
-                ),
-              ]);
+              const rows = [...data.cohorts]
+                .reverse()
+                .map((c) => [
+                  c.date,
+                  c.cohort_size,
+                  ...days.map((d) => c.retention[String(d)]?.count ?? ""),
+                  ...days.map((d) =>
+                    c.retention[String(d)]
+                      ? (c.retention[String(d)].rate * 100).toFixed(1) + "%"
+                      : "",
+                  ),
+                ]);
               downloadCsv(`retention_${type}_${startDate}_${endDate}.csv`, headers, rows);
             }}
-            style={{
-              padding: "6px 16px",
-              background: "#059669",
-              color: "#fff",
-              border: "none",
-              borderRadius: 4,
-              cursor: "pointer",
-              fontSize: 13,
-              marginLeft: 8,
-            }}
+            style={csvBtnStyle}
           >
             CSV
           </button>
         )}
-      </div>
+      </DateRangeFilter>
 
       {/* 설명 */}
       <p style={{ fontSize: 13, color: "#6b7280", margin: "0 0 1rem" }}>
@@ -188,6 +127,16 @@ export default function RetentionPage() {
           ? "해당 기간에 처음 방문한 사용자가 D-N일 후에 다시 사용한 비율"
           : "해당 날짜에 활동한 모든 사용자가 D-N일 후에 다시 사용한 비율"}
       </p>
+
+      {loading && <LoadingState />}
+      {error && <ErrorState message={error} onRetry={() => void load()} />}
+      {!loading && !error && !data && (
+        <EmptyState
+          icon="🔄"
+          title="리텐션 데이터가 없습니다"
+          description="조회 버튼을 눌러 데이터를 검색하세요"
+        />
+      )}
 
       {/* 히트맵 테이블 */}
       {data && (
@@ -207,7 +156,7 @@ export default function RetentionPage() {
               </tr>
             </thead>
             <tbody>
-              {data.cohorts.map((cohort) => (
+              {[...data.cohorts].reverse().map((cohort) => (
                 <tr key={cohort.date} style={{ borderBottom: "1px solid #e5e7eb" }}>
                   <td style={{ padding: 8, whiteSpace: "nowrap" }}>{cohort.date}</td>
                   <td style={{ padding: 8, textAlign: "right", fontWeight: 600 }}>
@@ -247,3 +196,20 @@ export default function RetentionPage() {
     </div>
   );
 }
+
+const filterSelect: React.CSSProperties = {
+  padding: "6px 10px",
+  borderRadius: 6,
+  border: "1px solid #d1d5db",
+  fontSize: 14,
+};
+
+const csvBtnStyle: React.CSSProperties = {
+  padding: "6px 16px",
+  background: "#059669",
+  color: "#fff",
+  border: "none",
+  borderRadius: 6,
+  cursor: "pointer",
+  fontSize: 14,
+};

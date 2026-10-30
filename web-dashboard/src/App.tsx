@@ -12,6 +12,9 @@ import UsersPage from "./features/users/UsersPage";
 import AnalyticsPage from "./features/analytics/AnalyticsPage";
 import RetentionPage from "./features/analytics/RetentionPage";
 import TrendPage from "./features/analytics/TrendPage";
+import SessionListPage from "./features/replay/SessionListPage";
+import SessionReplayPage from "./features/replay/SessionReplayPage";
+import AppScreensPage from "./features/screens/AppScreensPage";
 import OrganizationsPage from "./features/organization/OrganizationsPage";
 import ProjectsPage from "./features/project/ProjectsPage";
 
@@ -44,7 +47,10 @@ export default function App() {
           <Route path="/journeys" element={<AnalyticsPage tab="journeys" />} />
           <Route path="/trend" element={<TrendPage />} />
           <Route path="/retention" element={<RetentionPage />} />
+          <Route path="/sessions" element={<SessionListPage />} />
+          <Route path="/sessions/:sessionId/replay" element={<SessionReplayPage />} />
           <Route path="/users" element={<UsersPage />} />
+          <Route path="/app-screens" element={<AppScreensPage />} />
           <Route path="/settings/organizations" element={<OrganizationsPage />} />
           <Route path="/settings/projects" element={<ProjectsPage />} />
           <Route path="/settings/apps" element={<ApplicationsPage />} />

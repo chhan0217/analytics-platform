@@ -126,6 +126,103 @@ export interface CohortEntry {
   retention: Record<string, { count: number; rate: number }>;
 }
 
+// 세션 리플레이
+export interface SessionListEntry {
+  session_id: string;
+  anonymous_id: string;
+  external_user_id: string | null;
+  started_at: string;
+  ended_at: string | null;
+  last_event_at: string;
+  event_count: number;
+  screen_count: number;
+  device: DeviceInfo | null;
+}
+
+export interface DeviceInfo {
+  os_name: string | null;
+  os_version: string | null;
+  device_model: string | null;
+}
+
+export interface SessionReplayResponse {
+  session: SessionSummary;
+  templates: Record<string, TemplateSnapshot>;
+  timeline: TimelineEvent[];
+}
+
+export interface TemplateSnapshot {
+  viewport: { width: number; height: number };
+  wireframe: WireframeNode[];
+  screenshot?: string;
+}
+
+export interface AppScreenEntry {
+  id: string;
+  screen_id: string;
+  app_version: string;
+  viewport_width: number;
+  viewport_height: number;
+  node_count: number;
+  has_screenshot: boolean;
+}
+
+export interface ScreenLayoutEntry {
+  id: string;
+  screen_id: string;
+  display_name: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ScreenLayoutDetail {
+  id: string;
+  screen_id: string;
+  display_name: string;
+  layout_json: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface WireframeNode {
+  id: number;
+  type: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  text?: string;
+  children?: WireframeNode[];
+  style?: NodeStyle;
+}
+
+export interface NodeStyle {
+  background_color?: string;
+  text_color?: string;
+  font_size?: number;
+  corner_radius?: number;
+  alpha?: number;
+  content_description?: string;
+}
+
+export interface SessionSummary {
+  session_id: string;
+  anonymous_id: string;
+  external_user_id: string | null;
+  started_at: string;
+  ended_at: string | null;
+  device: DeviceInfo | null;
+}
+
+export interface TimelineEvent {
+  event_id: string;
+  event_key: string;
+  occurred_at: string;
+  screen_id: string | null;
+  duration_ms: number | null;
+  properties: Record<string, string>;
+}
+
 // 이벤트
 export interface AnalyticsEvent {
   id: string;

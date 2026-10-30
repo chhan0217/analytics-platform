@@ -1,7 +1,12 @@
 import { useState } from "react";
+import { todayKst, daysAgoKst } from "../../utils/date";
 import { api } from "../../api/client";
 import { downloadCsv } from "../../utils/csv";
 import { useProject } from "../../context/ProjectContext";
+import DateRangeFilter from "../../components/DateRangeFilter";
+import LoadingState from "../../components/LoadingState";
+import ErrorState from "../../components/ErrorState";
+import EmptyState from "../../components/EmptyState";
 import type {
   DataResponse,
   EventSummaryResponse,
@@ -17,10 +22,8 @@ export default function EventSummaryPage() {
   const { selectedProject } = useProject();
   const projectId = selectedProject?.id;
 
-  const [startDate, setStartDate] = useState(
-    () => new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-  );
-  const [endDate, setEndDate] = useState(() => new Date().toISOString().split("T")[0]);
+  const [startDate, setStartDate] = useState(() => daysAgoKst(7));
+  const [endDate, setEndDate] = useState(() => todayKst());
   const [events, setEvents] = useState<EventSummaryEntry[]>([]);
   const [loaded, setLoaded] = useState(false);
 
@@ -30,22 +33,25 @@ export default function EventSummaryPage() {
   const [selectedPropertyKey, setSelectedPropertyKey] = useState<string | null>(null);
   const [breakdown, setBreakdown] = useState<BreakdownEntry[]>([]);
   const [breakdownLoading, setBreakdownLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const loadSummary = async () => {
-    const start = `${startDate}T00:00:00Z`;
-    const end = `${endDate}T23:59:59Z`;
-    const res = await api<DataResponse<EventSummaryResponse>>(
-      `/admin/projects/${projectId}/analytics/events/summary?start_date=${start}&end_date=${end}`,
-    );
-    setEvents(res.data.events);
-    setLoaded(true);
-    setSelectedEventKey(null);
-    setBreakdown([]);
-  };
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    void loadSummary();
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api<DataResponse<EventSummaryResponse>>(
+        `/admin/projects/${projectId}/analytics/events/summary?start_date=${startDate}&end_date=${endDate}`,
+      );
+      setEvents(res.data.events);
+      setLoaded(true);
+      setSelectedEventKey(null);
+      setBreakdown([]);
+    } catch {
+      setError("이벤트 집계를 불러오지 못했습니다.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleEventClick = async (eventKey: string) => {
@@ -79,11 +85,9 @@ export default function EventSummaryPage() {
 
   const loadBreakdown = async (eventKey: string, propertyKey: string) => {
     setBreakdownLoading(true);
-    const start = `${startDate}T00:00:00Z`;
-    const end = `${endDate}T23:59:59Z`;
     try {
       const res = await api<DataResponse<EventBreakdownResponse>>(
-        `/admin/projects/${projectId}/analytics/events/breakdown?start_date=${start}&end_date=${end}&event_key=${eventKey}&property_key=${propertyKey}`,
+        `/admin/projects/${projectId}/analytics/events/breakdown?start_date=${startDate}&end_date=${endDate}&event_key=${eventKey}&property_key=${propertyKey}`,
       );
       setBreakdown(res.data.breakdown);
     } catch {
@@ -105,38 +109,16 @@ export default function EventSummaryPage() {
     <div style={{ display: "flex", gap: "1rem" }}>
       <div style={{ flex: 1 }}>
         <h2>이벤트 집계</h2>
-        <form
-          onSubmit={handleSearch}
-          style={{ display: "flex", gap: 8, marginBottom: "1rem", flexWrap: "wrap" }}
+        <DateRangeFilter
+          startDate={startDate}
+          endDate={endDate}
+          onStartDateChange={setStartDate}
+          onEndDateChange={setEndDate}
+          onSearch={() => void loadSummary()}
+          loading={loading}
         >
-          <input
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            style={{ padding: 8, borderRadius: 4, border: "1px solid #ddd" }}
-          />
-          <input
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            style={{ padding: 8, borderRadius: 4, border: "1px solid #ddd" }}
-          />
-          <button
-            type="submit"
-            style={{
-              padding: "8px 16px",
-              background: "#4f46e5",
-              color: "#fff",
-              border: "none",
-              borderRadius: 4,
-              cursor: "pointer",
-            }}
-          >
-            조회
-          </button>
           {events.length > 0 && (
             <button
-              type="button"
               onClick={() =>
                 downloadCsv(
                   `events_${startDate}_${endDate}.csv`,
@@ -145,21 +127,29 @@ export default function EventSummaryPage() {
                 )
               }
               style={{
-                padding: "8px 16px",
+                padding: "6px 16px",
                 background: "#059669",
                 color: "#fff",
                 border: "none",
-                borderRadius: 4,
+                borderRadius: 6,
                 cursor: "pointer",
-                marginLeft: 8,
+                fontSize: 14,
               }}
             >
               CSV
             </button>
           )}
-        </form>
+        </DateRangeFilter>
 
-        {loaded && events.length === 0 && <p style={{ color: "#666" }}>이벤트가 없습니다.</p>}
+        {loading && <LoadingState />}
+        {error && <ErrorState message={error} onRetry={() => void loadSummary()} />}
+        {loaded && events.length === 0 && !loading && (
+          <EmptyState
+            icon="📊"
+            title="이벤트가 없습니다"
+            description="조건을 변경하여 다시 검색해 보세요."
+          />
+        )}
 
         {events.length > 0 && (
           <>
@@ -241,9 +231,9 @@ export default function EventSummaryPage() {
               </div>
 
               {breakdownLoading ? (
-                <p style={{ color: "#666" }}>로딩 중...</p>
+                <LoadingState />
               ) : breakdown.length === 0 ? (
-                <p style={{ color: "#666" }}>데이터가 없습니다.</p>
+                <EmptyState icon="📉" title="데이터가 없습니다" />
               ) : (
                 <table style={{ width: "100%", borderCollapse: "collapse" }}>
                   <thead>

@@ -293,7 +293,29 @@
 | `date` | YYYY-MM-DD | 기준 날짜 (기본: 오늘, KST 기준) |
 | `application_id` | UUID | 앱 필터 (선택) |
 
+### 개요 응답 (`/overview`)
+
+이전 기간(동일 길이) 집계를 `previous` 필드로 함께 반환한다.
+
+```json
+{
+  "data": {
+    "total_events": 1234,
+    "total_sessions": 567,
+    "total_users": 89,
+    "period": { "start_date": "...", "end_date": "..." },
+    "previous": {
+      "total_events": 1097,
+      "total_sessions": 586,
+      "total_users": 82
+    }
+  }
+}
+```
+
 ### 활성 사용자 응답
+
+이전 기간 DAU/WAU/MAU를 `previous_dau/wau/mau` 필드로 함께 반환한다.
 
 ```json
 {
@@ -302,7 +324,10 @@
     "dau": 18,
     "wau": 35,
     "mau": 80,
-    "stickiness": 0.225
+    "stickiness": 0.225,
+    "previous_dau": 15,
+    "previous_wau": 30,
+    "previous_mau": 70
   }
 }
 ```
@@ -366,7 +391,109 @@
 
 ---
 
-## 9. 에러 코드 체계
+## 9. 관리자 API — 세션 리플레이
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| `GET` | `/admin/projects/{projectId}/sessions` | 세션 목록 |
+| `GET` | `/admin/projects/{projectId}/sessions/{sessionId}/replay` | 세션 타임라인 (리플레이용) |
+
+### 세션 목록 파라미터
+
+| 파라미터 | 타입 | 설명 |
+|---|---|---|
+| `start_date` | ISO-8601 | 시작일 (필수) |
+| `end_date` | ISO-8601 | 종료일 (필수) |
+| `application_id` | UUID | 앱 필터 (선택) |
+| `page` | integer | 페이지 번호 (기본 1) |
+| `size` | integer | 페이지 크기 (기본 20) |
+
+### 세션 목록 응답
+
+```json
+{
+  "data": [
+    {
+      "session_id": "uuid",
+      "anonymous_id": "uuid",
+      "external_user_id": "user@example.com",
+      "started_at": "2026-10-29T10:00:00Z",
+      "ended_at": "2026-10-29T10:15:00Z",
+      "last_event_at": "2026-10-29T10:14:30Z",
+      "event_count": 23,
+      "screen_count": 5,
+      "device": { "os_name": "Android", "os_version": "16", "device_model": "SM-S918N" }
+    }
+  ],
+  "meta": { "total": 142, "page": 1, "page_size": 20 }
+}
+```
+
+### 세션 리플레이 응답
+
+```json
+{
+  "data": {
+    "session": {
+      "session_id": "uuid",
+      "anonymous_id": "uuid",
+      "started_at": "...",
+      "ended_at": "...",
+      "device": { ... }
+    },
+    "timeline": [
+      {
+        "event_id": "uuid",
+        "event_key": "screen_view",
+        "occurred_at": "2026-10-29T10:00:00Z",
+        "screen_id": "home",
+        "duration_ms": 5200
+      },
+      {
+        "event_id": "uuid",
+        "event_key": "button_click",
+        "occurred_at": "2026-10-29T10:00:03Z",
+        "properties": { "button_id": "search" }
+      }
+    ]
+  }
+}
+```
+
+---
+
+## 10. 관리자 API — 화면 레이아웃
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| `GET` | `/admin/projects/{projectId}/screen-layouts` | 레이아웃 목록 |
+| `POST` | `/admin/projects/{projectId}/screen-layouts` | 레이아웃 생성 |
+| `GET` | `/admin/projects/{projectId}/screen-layouts/{layoutId}` | 레이아웃 상세 (JSON 포함) |
+| `PATCH` | `/admin/projects/{projectId}/screen-layouts/{layoutId}` | 레이아웃 수정 |
+| `DELETE` | `/admin/projects/{projectId}/screen-layouts/{layoutId}` | 레이아웃 삭제 |
+
+### 레이아웃 생성 요청
+
+```json
+{
+  "screen_id": "mypage",
+  "display_name": "마이페이지",
+  "layout_json": "{ ... JSON 문자열 ... }"
+}
+```
+
+### 레이아웃 수정 요청
+
+```json
+{
+  "display_name": "마이페이지 (수정)",
+  "layout_json": "{ ... JSON 문자열 ... }"
+}
+```
+
+---
+
+## 11. 에러 코드 체계
 
 ### 공통
 | code | 설명 |

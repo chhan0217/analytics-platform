@@ -1,7 +1,11 @@
 import { useState } from "react";
+import { formatKstDateTime } from "../../utils/date";
 import { api } from "../../api/client";
 import { useProject } from "../../context/ProjectContext";
 import type { ListResponse } from "../../api/types";
+import LoadingState from "../../components/LoadingState";
+import ErrorState from "../../components/ErrorState";
+import EmptyState from "../../components/EmptyState";
 
 interface UserResult {
   id: string;
@@ -36,24 +40,40 @@ export default function UsersPage() {
   const [sessions, setSessions] = useState<SessionResult[]>([]);
   const [events, setEvents] = useState<SessionEvent[]>([]);
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [searched, setSearched] = useState(false);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!projectId || !searchValue) return;
+    setLoading(true);
+    setError(null);
     setSessions([]);
     setEvents([]);
     setSelectedSession(null);
 
-    const param =
-      searchType === "external" ? `external_user_id=${searchValue}` : `anonymous_id=${searchValue}`;
-    const res = await api<ListResponse<UserResult>>(`/admin/projects/${projectId}/users?${param}`);
-    setUsers(res.data);
-
-    if (res.data.length > 0) {
-      const sessRes = await api<ListResponse<SessionResult>>(
-        `/admin/projects/${projectId}/users/${res.data[0].id}/sessions`,
+    try {
+      const param =
+        searchType === "external"
+          ? `external_user_id=${searchValue}`
+          : `anonymous_id=${searchValue}`;
+      const res = await api<ListResponse<UserResult>>(
+        `/admin/projects/${projectId}/users?${param}`,
       );
-      setSessions(sessRes.data);
+      setUsers(res.data);
+
+      if (res.data.length > 0) {
+        const sessRes = await api<ListResponse<SessionResult>>(
+          `/admin/projects/${projectId}/users/${res.data[0].id}/sessions`,
+        );
+        setSessions(sessRes.data);
+      }
+    } catch {
+      setError("사용자 검색에 실패했습니다.");
+    } finally {
+      setLoading(false);
+      setSearched(true);
     }
   };
 
@@ -101,6 +121,21 @@ export default function UsersPage() {
         </button>
       </form>
 
+      {loading && <LoadingState message="사용자 검색 중..." />}
+      {error && (
+        <ErrorState
+          message={error}
+          onRetry={() => void handleSearch({ preventDefault: () => {} } as React.FormEvent)}
+        />
+      )}
+      {searched && !loading && !error && users.length === 0 && (
+        <EmptyState
+          icon="🔍"
+          title="검색 결과가 없습니다"
+          description="다른 검색어로 다시 시도해보세요"
+        />
+      )}
+
       {users.length > 0 && (
         <div style={{ marginBottom: "1.5rem" }}>
           <h3>사용자 정보</h3>
@@ -125,7 +160,7 @@ export default function UsersPage() {
                 </div>
               )}
               <div>
-                <strong>생성일:</strong> {new Date(u.created_at).toLocaleString()}
+                <strong>생성일:</strong> {formatKstDateTime(u.created_at)}
               </div>
             </div>
           ))}
@@ -142,9 +177,9 @@ export default function UsersPage() {
               const status = s.ended_at ? "종료" : isExpired ? "종료 (추정)" : "활성";
               const statusColor = s.ended_at ? "#6b7280" : isExpired ? "#f59e0b" : "#10b981";
               const effectiveEndedAt = s.ended_at
-                ? new Date(s.ended_at).toLocaleString()
+                ? formatKstDateTime(s.ended_at)
                 : isExpired
-                  ? new Date(lastEvent + 30 * 60 * 1000).toLocaleString()
+                  ? formatKstDateTime(new Date(lastEvent + 30 * 60 * 1000).toISOString())
                   : "-";
 
               return (
@@ -166,11 +201,9 @@ export default function UsersPage() {
                     <span style={{ color: statusColor, fontWeight: 600 }}>{status}</span>
                   </div>
                   <div style={{ color: "#666", marginTop: 4 }}>
-                    시작: {new Date(s.started_at).toLocaleString()}
+                    시작: {formatKstDateTime(s.started_at)}
                   </div>
-                  <div style={{ color: "#666" }}>
-                    마지막: {new Date(s.last_event_at).toLocaleString()}
-                  </div>
+                  <div style={{ color: "#666" }}>마지막: {formatKstDateTime(s.last_event_at)}</div>
                   <div style={{ color: "#666" }}>종료: {effectiveEndedAt}</div>
                 </div>
               );

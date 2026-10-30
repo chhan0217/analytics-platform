@@ -1,5 +1,7 @@
 package io.github.chaevi.analytics.backend.analytics
 
+import io.github.chaevi.analytics.backend.common.parseEndInstant
+import io.github.chaevi.analytics.backend.common.parseStartInstant
 import io.github.chaevi.analytics.backend.ingest.AnalyticsEventTable
 import kotlinx.datetime.Instant
 import org.jetbrains.exposed.sql.Op
@@ -37,6 +39,7 @@ internal fun todayKst(): String =
 
 @Suppress("LargeClass")
 class AnalyticsService {
+    @Suppress("LongMethod")
     fun activeUsers(
         projectId: String,
         date: String,
@@ -77,12 +80,38 @@ class AnalyticsService {
                     0.0
                 }
 
+            // 이전 기간 계산
+            val prevDate = baseDate.minusDays(1).toString()
+            val prevWauStart = baseDate.minusDays(7).toString()
+            val prevWauEnd = baseDate.minusDays(1).toString()
+            val prevMauStart = baseDate.minusDays(59).toString()
+            val prevMauEnd = baseDate.minusDays(30).toString()
+
+            val prevUserDates = mutableMapOf<String, MutableSet<String>>()
+            AnalyticsEventTable
+                .select(AnalyticsEventTable.anonymousId, AnalyticsEventTable.occurredAt)
+                .where { baseCondition }
+                .forEach {
+                    val dateStr = toKstDate(it[AnalyticsEventTable.occurredAt])
+                    if (dateStr in prevMauStart..prevDate) {
+                        val userId = it[AnalyticsEventTable.anonymousId].toString()
+                        prevUserDates.getOrPut(userId) { mutableSetOf() }.add(dateStr)
+                    }
+                }
+
+            val prevDau = prevUserDates.count { (_, dates) -> dates.contains(prevDate) }.toLong()
+            val prevWau = prevUserDates.count { (_, dates) -> dates.any { it in prevWauStart..prevWauEnd } }.toLong()
+            val prevMau = prevUserDates.count { (_, dates) -> dates.any { it in prevMauStart..prevMauEnd } }.toLong()
+
             ActiveUsersResponse(
                 date = date,
                 dau = dauUsers.toLong(),
                 wau = wauUsers.toLong(),
                 mau = mauUsers.toLong(),
                 stickiness = stickiness,
+                previousDau = prevDau,
+                previousWau = prevWau,
+                previousMau = prevMau,
             )
         }
     }
@@ -96,37 +125,51 @@ class AnalyticsService {
         val projUuid = UUID.fromString(projectId)
 
         return transaction {
-            var condition: Op<Boolean> =
-                (AnalyticsEventTable.projectId eq projUuid) and
-                    (AnalyticsEventTable.occurredAt greaterEq start) and
-                    (AnalyticsEventTable.occurredAt lessEq end)
-
-            applicationId?.let {
-                condition = condition and (AnalyticsEventTable.applicationId eq UUID.fromString(it))
+            fun countPeriod(
+                s: Instant,
+                e: Instant,
+            ): Triple<Long, Long, Long> {
+                var cond: Op<Boolean> =
+                    (AnalyticsEventTable.projectId eq projUuid) and
+                        (AnalyticsEventTable.occurredAt greaterEq s) and
+                        (AnalyticsEventTable.occurredAt lessEq e)
+                applicationId?.let {
+                    cond = cond and (AnalyticsEventTable.applicationId eq UUID.fromString(it))
+                }
+                val events = AnalyticsEventTable.selectAll().where { cond }.count()
+                val sessions =
+                    AnalyticsEventTable
+                        .select(AnalyticsEventTable.sessionId)
+                        .where { cond }
+                        .withDistinct()
+                        .count()
+                val users =
+                    AnalyticsEventTable
+                        .select(AnalyticsEventTable.anonymousId)
+                        .where { cond }
+                        .withDistinct()
+                        .count()
+                return Triple(events, sessions, users)
             }
 
-            val totalEvents =
-                AnalyticsEventTable.selectAll().where { condition }.count()
+            val (totalEvents, totalSessions, totalUsers) = countPeriod(start, end)
 
-            val sessionIds =
-                AnalyticsEventTable
-                    .select(AnalyticsEventTable.sessionId)
-                    .where { condition }
-                    .withDistinct()
-                    .count()
-
-            val userIds =
-                AnalyticsEventTable
-                    .select(AnalyticsEventTable.anonymousId)
-                    .where { condition }
-                    .withDistinct()
-                    .count()
+            val durationMs = (end - start).inWholeMilliseconds
+            val prevEnd = start
+            val prevStart = prevEnd - kotlin.time.Duration.parse("${durationMs}ms")
+            val (prevEvents, prevSessions, prevUsers) = countPeriod(prevStart, prevEnd)
 
             OverviewResponse(
                 totalEvents = totalEvents,
-                totalSessions = sessionIds,
-                totalUsers = userIds,
+                totalSessions = totalSessions,
+                totalUsers = totalUsers,
                 period = PeriodInfo(start.toString(), end.toString()),
+                previous =
+                    OverviewPrevious(
+                        totalEvents = prevEvents,
+                        totalSessions = prevSessions,
+                        totalUsers = prevUsers,
+                    ),
             )
         }
     }
@@ -301,8 +344,8 @@ class AnalyticsService {
         request: FunnelRequest,
     ): FunnelResponse {
         val projUuid = UUID.fromString(projectId)
-        val start = Instant.parse(request.startDate)
-        val end = Instant.parse(request.endDate)
+        val start = parseStartInstant(request.startDate)
+        val end = parseEndInstant(request.endDate)
 
         return transaction {
             var baseCondition: Op<Boolean> =

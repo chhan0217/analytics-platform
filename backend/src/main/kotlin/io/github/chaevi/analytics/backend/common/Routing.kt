@@ -8,6 +8,7 @@ import io.github.chaevi.analytics.backend.ingest.eventQueryRoutes
 import io.github.chaevi.analytics.backend.ingest.ingestRoutes
 import io.github.chaevi.analytics.backend.organization.organizationRoutes
 import io.github.chaevi.analytics.backend.project.projectRoutes
+import io.github.chaevi.analytics.backend.replay.replayRoutes
 import io.github.chaevi.analytics.backend.taxonomy.taxonomyEventRoutes
 import io.github.chaevi.analytics.backend.taxonomy.taxonomyPropertyRoutes
 import io.github.chaevi.analytics.backend.user.userQueryRoutes
@@ -65,6 +66,7 @@ fun Application.configureRouting() {
                 eventQueryRoutes()
                 userQueryRoutes()
                 analyticsRoutes()
+                replayRoutes()
             }
         }
     }

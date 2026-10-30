@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { formatKstDateTime } from "../../utils/date";
 import { api } from "../../api/client";
 import { useProject } from "../../context/ProjectContext";
 import type {
@@ -8,6 +9,9 @@ import type {
   CreatedCredential,
   Credential,
 } from "../../api/types";
+import LoadingState from "../../components/LoadingState";
+import ErrorState from "../../components/ErrorState";
+import EmptyState from "../../components/EmptyState";
 
 export default function ApplicationsPage() {
   const { selectedProject } = useProject();
@@ -17,15 +21,25 @@ export default function ApplicationsPage() {
   const [platform, setPlatform] = useState("ANDROID");
   const [credentials, setCredentials] = useState<Record<string, Credential[]>>({});
   const [newKey, setNewKey] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const load = async () => {
-    const res = await api<ListResponse<Application>>(`/admin/projects/${projectId}/applications`);
-    setApps(res.data);
-    for (const app of res.data) {
-      const creds = await api<ListResponse<Credential>>(
-        `/admin/projects/${projectId}/applications/${app.id}/credentials`,
-      );
-      setCredentials((prev) => ({ ...prev, [app.id]: creds.data }));
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api<ListResponse<Application>>(`/admin/projects/${projectId}/applications`);
+      setApps(res.data);
+      for (const app of res.data) {
+        const creds = await api<ListResponse<Credential>>(
+          `/admin/projects/${projectId}/applications/${app.id}/credentials`,
+        );
+        setCredentials((prev) => ({ ...prev, [app.id]: creds.data }));
+      }
+    } catch {
+      setError("앱 목록을 불러오지 못했습니다.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -94,6 +108,12 @@ export default function ApplicationsPage() {
           등록
         </button>
       </form>
+
+      {loading && <LoadingState />}
+      {error && <ErrorState message={error} onRetry={load} />}
+      {!loading && !error && apps.length === 0 && (
+        <EmptyState icon="📱" title="등록된 앱이 없습니다" />
+      )}
 
       {newKey && (
         <div
@@ -198,9 +218,7 @@ export default function ApplicationsPage() {
                         {c.status}
                       </span>
                     </td>
-                    <td style={{ padding: 4, color: "#666" }}>
-                      {new Date(c.created_at).toLocaleString()}
-                    </td>
+                    <td style={{ padding: 4, color: "#666" }}>{formatKstDateTime(c.created_at)}</td>
                     <td style={{ padding: 4, display: "flex", gap: 8 }}>
                       <button
                         onClick={() => {
