@@ -15,7 +15,6 @@ import TrendPage from "./features/analytics/TrendPage";
 import SessionListPage from "./features/replay/SessionListPage";
 import SessionReplayPage from "./features/replay/SessionReplayPage";
 import AppScreensPage from "./features/screens/AppScreensPage";
-import ScreenEditPage from "./features/screens/ScreenEditPage";
 import OrganizationsPage from "./features/organization/OrganizationsPage";
 import ProjectsPage from "./features/project/ProjectsPage";
 
@@ -52,7 +51,6 @@ export default function App() {
           <Route path="/sessions/:sessionId/replay" element={<SessionReplayPage />} />
           <Route path="/users" element={<UsersPage />} />
           <Route path="/app-screens" element={<AppScreensPage />} />
-          <Route path="/app-screens/:layoutId" element={<ScreenEditPage />} />
           <Route path="/settings/organizations" element={<OrganizationsPage />} />
           <Route path="/settings/projects" element={<ProjectsPage />} />
           <Route path="/settings/apps" element={<ApplicationsPage />} />

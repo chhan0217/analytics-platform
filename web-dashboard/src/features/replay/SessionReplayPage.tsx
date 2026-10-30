@@ -1,9 +1,11 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { api } from "../../api/client";
 import { useProject } from "../../context/ProjectContext";
 import type { DataResponse, SessionReplayResponse, TimelineEvent } from "../../api/types";
-import WireframeRenderer from "./components/WireframeRenderer";
+import { screenComponents } from "../screens/layouts";
+import LoadingState from "../../components/LoadingState";
+import ErrorState from "../../components/ErrorState";
 
 function formatTime(utcStr: string): string {
   return new Date(utcStr).toLocaleTimeString("ko-KR", { timeZone: "Asia/Seoul" });
@@ -66,6 +68,39 @@ export default function SessionReplayPage() {
   const screenEvents = data?.timeline.filter((e) => e.event_key === "screen_view") || [];
   const currentScreen = screenEvents[currentIndex];
 
+  // 인터랙션 하이라이트
+  const [highlightId, setHighlightId] = useState<string | null>(null);
+
+  // 화면 전환 애니메이션
+  const [fadeKey, setFadeKey] = useState(0);
+  const [fadeIn, setFadeIn] = useState(true);
+  const prevIndexRef = useRef(currentIndex);
+
+  useEffect(() => {
+    if (prevIndexRef.current !== currentIndex) {
+      setFadeIn(false);
+      const timer = setTimeout(() => {
+        setFadeKey((k) => k + 1);
+        setFadeIn(true);
+        prevIndexRef.current = currentIndex;
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [currentIndex]);
+
+  // 현재 화면에서 발생한 이벤트 목록 (screen_view ~ 다음 screen_view 사이)
+  const currentScreenEvents = useMemo(() => {
+    if (!data || !currentScreen) return [];
+    const timeline = data.timeline;
+    const startIdx = timeline.findIndex((e) => e.event_id === currentScreen.event_id);
+    if (startIdx === -1) return [];
+    const nextScreenIdx = timeline.findIndex(
+      (e, i) => i > startIdx && e.event_key === "screen_view",
+    );
+    const endIdx = nextScreenIdx === -1 ? timeline.length : nextScreenIdx;
+    return timeline.slice(startIdx, endIdx);
+  }, [data, currentScreen]);
+
   useEffect(() => {
     if (!projectId || !sessionId) return;
     setLoading(true);
@@ -77,11 +112,38 @@ export default function SessionReplayPage() {
       .finally(() => setLoading(false));
   }, [projectId, sessionId]);
 
+  // 인터랙션 이벤트 순차 재생
+  useEffect(() => {
+    if (!isPlaying || currentScreenEvents.length <= 1) {
+      setHighlightId(null);
+      return;
+    }
+    const interactions = currentScreenEvents.filter(
+      (e) => e.event_key !== "screen_view" && e.event_key !== "screen_leave",
+    );
+    if (interactions.length === 0) return;
+
+    const durationMs = currentScreen?.duration_ms || 3000;
+    const interval = durationMs / speed / (interactions.length + 1);
+    const timers: ReturnType<typeof setTimeout>[] = [];
+
+    interactions.forEach((e, i) => {
+      const elId = e.properties.element_id;
+      if (!elId) return;
+      timers.push(
+        setTimeout(() => setHighlightId(elId), interval * (i + 1)),
+      );
+    });
+
+    return () => timers.forEach(clearTimeout);
+  }, [isPlaying, currentScreenEvents, speed, currentScreen]);
+
   // 재생 타이머
   useEffect(() => {
     if (!isPlaying || !currentScreen) return;
     const durationMs = currentScreen.duration_ms || 3000;
     timerRef.current = setTimeout(() => {
+      setHighlightId(null);
       if (currentIndex < screenEvents.length - 1) {
         setCurrentIndex((prev) => prev + 1);
       } else {
@@ -104,8 +166,8 @@ export default function SessionReplayPage() {
     setCurrentIndex((i) => Math.min(screenEvents.length - 1, i + 1));
   }, [screenEvents.length]);
 
-  if (loading) return <p style={{ color: "#9ca3af" }}>로딩 중...</p>;
-  if (error) return <p style={{ color: "#ef4444" }}>{error}</p>;
+  if (loading) return <LoadingState />;
+  if (error) return <ErrorState message={error} />;
   if (!data) return null;
 
   const { session, timeline } = data;
@@ -138,30 +200,33 @@ export default function SessionReplayPage() {
               )}
             </div>
             <div style={screenBody}>
-              {currentScreen?.screen_id && data?.templates[currentScreen.screen_id]?.screenshot ? (
-                <img
-                  src={data.templates[currentScreen.screen_id].screenshot}
-                  alt={currentScreen.screen_id}
-                  style={{ maxHeight: 500, borderRadius: 8 }}
-                />
-              ) : currentScreen?.screen_id && data?.templates[currentScreen.screen_id] ? (
-                <WireframeRenderer
-                  snapshot={data.templates[currentScreen.screen_id]}
-                  maxHeight={500}
-                />
-              ) : (
-                <div style={screenPlaceholder}>
-                  <div style={{ fontSize: 40, marginBottom: 8, opacity: 0.3 }}>
-                    {currentIndex + 1} / {screenEvents.length}
+              <div
+                key={fadeKey}
+                style={{
+                  transition: "opacity 0.15s ease, transform 0.2s ease",
+                  opacity: fadeIn ? 1 : 0,
+                  transform: fadeIn ? "translateX(0)" : "translateX(20px)",
+                }}
+              >
+                {currentScreen?.screen_id && screenComponents[currentScreen.screen_id] ? (
+                  (() => {
+                    const ScreenComp = screenComponents[currentScreen.screen_id!];
+                    return <ScreenComp highlightId={highlightId} />;
+                  })()
+                ) : (
+                  <div style={screenPlaceholder}>
+                    <div style={{ fontSize: 40, marginBottom: 8, opacity: 0.3 }}>
+                      {currentIndex + 1} / {screenEvents.length}
+                    </div>
+                    <div style={{ fontSize: 16, fontWeight: 600, color: "#4f46e5" }}>
+                      {currentScreen?.screen_id || "화면 없음"}
+                    </div>
+                    <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 4 }}>
+                      화면 미등록
+                    </div>
                   </div>
-                  <div style={{ fontSize: 16, fontWeight: 600, color: "#4f46e5" }}>
-                    {currentScreen?.screen_id || "화면 없음"}
-                  </div>
-                  <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 4 }}>
-                    와이어프레임 데이터 없음
-                  </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
 
@@ -236,9 +301,29 @@ export default function SessionReplayPage() {
             {timeline.map((e) => (
               <div
                 key={e.event_id}
+                onClick={() => {
+                  if (e.properties.element_id) {
+                    setHighlightId(e.properties.element_id);
+                  }
+                  if (e.event_key === "screen_view") {
+                    const idx = screenEvents.findIndex((se) => se.event_id === e.event_id);
+                    if (idx !== -1) { setIsPlaying(false); setCurrentIndex(idx); }
+                  }
+                }}
                 style={{
                   ...eventItem,
-                  background: currentScreen?.event_id === e.event_id ? "#eef2ff" : "transparent",
+                  cursor: "pointer",
+                  background: currentScreen?.event_id === e.event_id
+                    ? "#eef2ff"
+                    : currentScreenEvents.some((ce) => ce.event_id === e.event_id)
+                      ? "#f9fafb"
+                      : "transparent",
+                  borderLeft: currentScreen?.event_id === e.event_id
+                    ? "3px solid #4f46e5"
+                    : currentScreenEvents.some((ce) => ce.event_id === e.event_id)
+                      ? "3px solid #c7d2fe"
+                      : "3px solid transparent",
+                  transition: "all 0.2s ease",
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>

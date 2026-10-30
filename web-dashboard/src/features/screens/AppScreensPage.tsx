@@ -1,35 +1,32 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { api } from "../../api/client";
 import { useProject } from "../../context/ProjectContext";
 import type { DataResponse, ScreenLayoutEntry, ScreenLayoutDetail } from "../../api/types";
-import LayoutWireframe from "./components/LayoutWireframe";
+import { screenComponents } from "./layouts";
+import LoadingState from "../../components/LoadingState";
+import ErrorState from "../../components/ErrorState";
+import EmptyState from "../../components/EmptyState";
 
 export default function AppScreensPage() {
   const { selectedProject } = useProject();
   const projectId = selectedProject?.id;
-  const navigate = useNavigate();
 
   const [layouts, setLayouts] = useState<ScreenLayoutEntry[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [showCreate, setShowCreate] = useState(false);
-  const [newScreenId, setNewScreenId] = useState("");
-  const [newDisplayName, setNewDisplayName] = useState("");
-  const [creating, setCreating] = useState(false);
-  const [tab, setTab] = useState<"list" | "preview">("list");
   const [previews, setPreviews] = useState<ScreenLayoutDetail[]>([]);
-  const [loadingPreviews, setLoadingPreviews] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const loadLayouts = async () => {
     if (!projectId) return;
     setLoading(true);
+    setError(null);
     try {
       const res = await api<DataResponse<ScreenLayoutEntry[]>>(
         `/admin/projects/${projectId}/screen-layouts`,
       );
       setLayouts(res.data);
     } catch {
-      /* ignore */
+      setError("화면 목록을 불러오지 못했습니다.");
     } finally {
       setLoading(false);
     }
@@ -37,7 +34,6 @@ export default function AppScreensPage() {
 
   const loadPreviews = async () => {
     if (!projectId || layouts.length === 0) return;
-    setLoadingPreviews(true);
     try {
       const details = await Promise.all(
         layouts.map((l) =>
@@ -49,8 +45,6 @@ export default function AppScreensPage() {
       setPreviews(details);
     } catch {
       /* ignore */
-    } finally {
-      setLoadingPreviews(false);
     }
   };
 
@@ -59,200 +53,73 @@ export default function AppScreensPage() {
   }, [projectId]);
 
   useEffect(() => {
-    if (tab === "preview") loadPreviews();
-  }, [tab, layouts.length]);
-
-  const handleCreate = async () => {
-    if (!projectId || !newScreenId.trim() || !newDisplayName.trim()) return;
-    setCreating(true);
-    try {
-      const defaultJson = JSON.stringify(
-        {
-          screenId: newScreenId.trim(),
-          version: 1,
-          root: {
-            type: "column",
-            children: [
-              { type: "header", children: [{ type: "text", value: newDisplayName.trim() }] },
-            ],
-          },
-        },
-        null,
-        2,
-      );
-
-      const res = await api<DataResponse<{ id: string }>>(
-        `/admin/projects/${projectId}/screen-layouts`,
-        {
-          method: "POST",
-          body: JSON.stringify({
-            screen_id: newScreenId.trim(),
-            display_name: newDisplayName.trim(),
-            layout_json: defaultJson,
-          }),
-        },
-      );
-
-      setNewScreenId("");
-      setNewDisplayName("");
-      setShowCreate(false);
-      navigate(`/app-screens/${res.data.id}`);
-    } catch {
-      /* ignore */
-    } finally {
-      setCreating(false);
-    }
-  };
-
-  const handleDelete = async (id: string, screenId: string) => {
-    if (!confirm(`"${screenId}" 화면을 삭제하시겠습니까?`)) return;
-    try {
-      await api(`/admin/projects/${projectId}/screen-layouts/${id}`, { method: "DELETE" });
-      await loadLayouts();
-    } catch {
-      /* ignore */
-    }
-  };
+    if (layouts.length > 0) loadPreviews();
+  }, [layouts.length]);
 
   return (
     <div>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 12,
-        }}
-      >
-        <h2 style={titleStyle}>앱 화면</h2>
-        <button onClick={() => setShowCreate(true)} style={createBtn}>
-          + 새 화면 추가
-        </button>
-      </div>
+      <h2 style={titleStyle}>앱 화면</h2>
 
-      {/* 탭 */}
-      <div style={{ display: "flex", gap: 4, marginBottom: 16 }}>
-        <button onClick={() => setTab("list")} style={tabBtn(tab === "list")}>
-          목록
-        </button>
-        <button onClick={() => setTab("preview")} style={tabBtn(tab === "preview")}>
-          미리보기
-        </button>
-      </div>
+      {loading && <LoadingState />}
+      {error && <ErrorState message={error} onRetry={loadLayouts} />}
 
-      {showCreate && (
-        <div style={createCard}>
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <input
-              value={newScreenId}
-              onChange={(e) => setNewScreenId(e.target.value)}
-              placeholder="screen_id (예: login, mypage)"
-              style={inputStyle}
-            />
-            <input
-              value={newDisplayName}
-              onChange={(e) => setNewDisplayName(e.target.value)}
-              placeholder="표시 이름 (예: 로그인, 마이페이지)"
-              style={inputStyle}
-            />
-            <button onClick={handleCreate} disabled={creating} style={primaryBtn}>
-              {creating ? "생성 중..." : "생성"}
-            </button>
-            <button onClick={() => setShowCreate(false)} style={cancelBtn}>
-              취소
-            </button>
-          </div>
-        </div>
+      {!loading && !error && layouts.length === 0 && (
+        <EmptyState icon="📱" title="등록된 화면이 없습니다" />
       )}
 
-      {loading && <p style={{ color: "#9ca3af" }}>로딩 중...</p>}
-
-      {layouts.length === 0 && !loading && (
-        <div style={emptyState}>
-          <div style={{ fontSize: 40, marginBottom: 12, opacity: 0.3 }}>📱</div>
-          <div style={{ fontSize: 15, color: "#6b7280" }}>등록된 화면이 없습니다</div>
-          <div style={{ fontSize: 13, color: "#9ca3af", marginTop: 4 }}>
-            "새 화면 추가" 버튼을 눌러 앱 화면을 만들어보세요
-          </div>
-        </div>
-      )}
-
-      {tab === "list" ? (
-        /* 목록 탭 */
-        <div style={gridStyle}>
-          {layouts.map((layout) => (
-            <div key={layout.id} style={cardStyle}>
-              <div
-                style={{ display: "flex", justifyContent: "space-between", alignItems: "start" }}
-              >
-                <div>
-                  <div style={{ fontWeight: 600, fontSize: 15, color: "#1e1b4b" }}>
-                    {layout.display_name}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: 12,
-                      color: "#6b7280",
-                      marginTop: 2,
-                      fontFamily: "monospace",
-                    }}
-                  >
-                    {layout.screen_id}
-                  </div>
-                </div>
-                <button onClick={() => handleDelete(layout.id, layout.screen_id)} style={deleteBtn}>
-                  삭제
-                </button>
-              </div>
-              <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 8 }}>
-                수정:{" "}
-                {new Date(layout.updated_at).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })}
-              </div>
-              <button onClick={() => navigate(`/app-screens/${layout.id}`)} style={editBtn}>
-                편집
-              </button>
+      {screenFlows.map((flow) => {
+        const flowScreens = flow.screenIds
+          .map((sid) => previews.find((p) => p.screen_id === sid))
+          .filter(Boolean) as typeof previews;
+        if (flowScreens.length === 0) return null;
+        return (
+          <div key={flow.label} style={{ marginBottom: 48 }}>
+            <div style={flowHeader}>
+              <span style={flowLabel}>{flow.label}</span>
+              <span style={flowDesc}>{flow.desc}</span>
             </div>
-          ))}
-        </div>
-      ) : (
-        /* 미리보기 탭 */
-        <div>
-          {loadingPreviews && <p style={{ color: "#9ca3af" }}>미리보기 로딩 중...</p>}
-          <div style={previewGrid}>
-            {previews.map((p) => {
-              let parsed = null;
-              try {
-                parsed = JSON.parse(p.layout_json);
-              } catch {
-                /* ignore */
-              }
-              return (
-                <div key={p.id} style={previewCard}>
-                  <div style={{ marginBottom: 8, textAlign: "center" }}>
-                    <div style={{ fontWeight: 600, fontSize: 13, color: "#1e1b4b" }}>
-                      {p.display_name}
+            <div style={flowRow}>
+              {flowScreens.map((p, i) => {
+                const ScreenComp = screenComponents[p.screen_id];
+                return (
+                  <div key={p.id} style={{ display: "flex", alignItems: "center" }}>
+                    <div style={previewCard}>
+                      <div style={{ marginBottom: 8, textAlign: "center" }}>
+                        <div style={flowStepBadge}>{i + 1}</div>
+                        <div style={{ fontWeight: 600, fontSize: 13, color: "#1e1b4b" }}>
+                          {p.display_name}
+                        </div>
+                        <div style={{ fontSize: 11, color: "#9ca3af", fontFamily: "monospace" }}>
+                          {p.screen_id}
+                        </div>
+                      </div>
+                      {ScreenComp ? (
+                        <ScreenComp />
+                      ) : (
+                        <div style={previewEmpty}>화면 미등록</div>
+                      )}
                     </div>
-                    <div style={{ fontSize: 11, color: "#9ca3af", fontFamily: "monospace" }}>
-                      {p.screen_id}
-                    </div>
+                    {i < flowScreens.length - 1 && (
+                      <div style={flowArrow}>
+                        <svg
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="#c7d2fe"
+                          strokeWidth="2"
+                        >
+                          <path d="M5 12h14M13 6l6 6-6 6" />
+                        </svg>
+                      </div>
+                    )}
                   </div>
-                  {parsed ? (
-                    <LayoutWireframe layout={parsed} maxHeight={480} />
-                  ) : (
-                    <div style={previewEmpty}>JSON 오류</div>
-                  )}
-                  <button
-                    onClick={() => navigate(`/app-screens/${p.id}`)}
-                    style={{ ...editBtn, marginTop: 8 }}
-                  >
-                    편집
-                  </button>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })}
     </div>
   );
 }
@@ -261,110 +128,71 @@ const titleStyle: React.CSSProperties = {
   fontSize: 20,
   fontWeight: 600,
   color: "#1e1b4b",
-  margin: 0,
-};
-
-const tabBtn = (active: boolean): React.CSSProperties => ({
-  padding: "6px 14px",
-  background: active ? "#4f46e5" : "#f3f4f6",
-  color: active ? "#fff" : "#374151",
-  border: "none",
-  borderRadius: 6,
-  cursor: "pointer",
-  fontSize: 13,
-  fontWeight: 500,
-});
-
-const createBtn: React.CSSProperties = {
-  padding: "8px 16px",
-  background: "#4f46e5",
-  color: "#fff",
-  border: "none",
-  borderRadius: 6,
-  cursor: "pointer",
-  fontSize: 13,
-  fontWeight: 500,
-};
-
-const createCard: React.CSSProperties = {
-  padding: 16,
-  background: "#fff",
-  borderRadius: 8,
-  border: "1px solid #e5e7eb",
   marginBottom: 16,
 };
 
-const inputStyle: React.CSSProperties = {
-  padding: "8px 12px",
-  borderRadius: 6,
-  border: "1px solid #d1d5db",
-  fontSize: 13,
-  flex: 1,
+const screenFlows = [
+  {
+    label: "온보딩",
+    desc: "앱 실행 → 스플래시 → 로그인/회원가입 선택",
+    screenIds: ["splash", "onboard"],
+  },
+  {
+    label: "로그인",
+    desc: "이메일 로그인 → 아이디 찾기 / 비밀번호 재설정",
+    screenIds: ["login", "find_id", "reset_password"],
+  },
+  {
+    label: "회원가입",
+    desc: "약관동의 → 본인인증 → 정보입력 → 완료",
+    screenIds: ["register_term", "register_pass", "register_input", "register_complete"],
+  },
+];
+
+const flowHeader: React.CSSProperties = {
+  marginBottom: 16,
+  paddingBottom: 8,
+  borderBottom: "2px solid #e5e7eb",
 };
 
-const primaryBtn: React.CSSProperties = {
-  padding: "8px 16px",
+const flowLabel: React.CSSProperties = {
+  fontSize: 16,
+  fontWeight: 700,
+  color: "#1e1b4b",
+  marginRight: 12,
+};
+
+const flowDesc: React.CSSProperties = {
+  fontSize: 13,
+  color: "#9ca3af",
+};
+
+const flowRow: React.CSSProperties = {
+  display: "flex",
+  gap: 8,
+  overflowX: "auto",
+  paddingBottom: 8,
+};
+
+const flowArrow: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  padding: "0 4px",
+  flexShrink: 0,
+};
+
+const flowStepBadge: React.CSSProperties = {
+  width: 22,
+  height: 22,
+  borderRadius: "50%",
   background: "#4f46e5",
   color: "#fff",
-  border: "none",
-  borderRadius: 6,
-  cursor: "pointer",
-  fontSize: 13,
-};
-
-const cancelBtn: React.CSSProperties = {
-  padding: "8px 16px",
-  background: "#f3f4f6",
-  color: "#374151",
-  border: "1px solid #e5e7eb",
-  borderRadius: 6,
-  cursor: "pointer",
-  fontSize: 13,
-};
-
-const emptyState: React.CSSProperties = { textAlign: "center", padding: "60px 0" };
-
-const gridStyle: React.CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-  gap: 12,
-};
-
-const cardStyle: React.CSSProperties = {
-  padding: 16,
-  background: "#fff",
-  borderRadius: 8,
-  border: "1px solid #e5e7eb",
-  boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
-};
-
-const editBtn: React.CSSProperties = {
-  marginTop: 12,
-  width: "100%",
-  padding: "8px 0",
-  background: "#f3f4f6",
-  color: "#374151",
-  border: "1px solid #e5e7eb",
-  borderRadius: 6,
-  cursor: "pointer",
-  fontSize: 13,
-  fontWeight: 500,
-};
-
-const deleteBtn: React.CSSProperties = {
-  padding: "2px 8px",
-  background: "none",
-  color: "#ef4444",
-  border: "1px solid #fecaca",
-  borderRadius: 4,
-  cursor: "pointer",
   fontSize: 11,
-};
-
-const previewGrid: React.CSSProperties = {
-  display: "flex",
-  gap: 20,
-  flexWrap: "wrap",
+  fontWeight: 700,
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  marginBottom: 4,
 };
 
 const previewCard: React.CSSProperties = {
