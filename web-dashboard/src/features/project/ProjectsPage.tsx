@@ -3,16 +3,29 @@ import { formatKstDateTime } from "../../utils/date";
 import { api } from "../../api/client";
 import { useProject } from "../../context/ProjectContext";
 import type { ListResponse, Project, DataResponse } from "../../api/types";
+import LoadingState from "../../components/LoadingState";
+import ErrorState from "../../components/ErrorState";
+import EmptyState from "../../components/EmptyState";
 
 export default function ProjectsPage() {
   const { selectedOrg, selectedProject, selectProject, reloadOrgs } = useProject();
   const [projects, setProjects] = useState<Project[]>([]);
   const [name, setName] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const load = async () => {
     if (!selectedOrg) return;
-    const res = await api<ListResponse<Project>>(`/admin/organizations/${selectedOrg.id}/projects`);
-    setProjects(res.data);
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api<ListResponse<Project>>(`/admin/organizations/${selectedOrg.id}/projects`);
+      setProjects(res.data);
+    } catch {
+      setError("프로젝트 목록을 불러오지 못했습니다.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -72,6 +85,12 @@ export default function ProjectsPage() {
           생성
         </button>
       </form>
+      {loading && <LoadingState />}
+      {error && <ErrorState message={error} onRetry={load} />}
+      {!loading && !error && projects.length === 0 && (
+        <EmptyState icon="📁" title="등록된 프로젝트가 없습니다" />
+      )}
+      {projects.length > 0 && (
       <table style={{ width: "100%", borderCollapse: "collapse" }}>
         <thead>
           <tr style={{ borderBottom: "2px solid #e5e7eb", textAlign: "left" }}>
@@ -134,6 +153,7 @@ export default function ProjectsPage() {
           ))}
         </tbody>
       </table>
+      )}
     </div>
   );
 }

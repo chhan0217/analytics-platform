@@ -5,6 +5,9 @@ import { useProject } from "../../context/ProjectContext";
 import type { DataResponse } from "../../api/types";
 import { downloadCsv } from "../../utils/csv";
 import DateRangeFilter from "../../components/DateRangeFilter";
+import LoadingState from "../../components/LoadingState";
+import ErrorState from "../../components/ErrorState";
+import EmptyState from "../../components/EmptyState";
 
 interface ScreenEntry {
   screen_id: string;
@@ -58,6 +61,8 @@ export default function AnalyticsPage({ tab }: { tab: "screens" | "funnels" | "j
   const [funnelResult, setFunnelResult] = useState<FunnelResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sortKey, setSortKey] = useState<keyof ScreenEntry>("view_count");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
   const dateParams = `start_date=${startDate}&end_date=${endDate}`;
 
@@ -143,11 +148,23 @@ export default function AnalyticsPage({ tab }: { tab: "screens" | "funnels" | "j
         loading={loading}
       />
 
-      {loading && <p style={{ color: "#6b7280" }}>로딩 중...</p>}
-      {error && <p style={{ color: "#dc2626" }}>{error}</p>}
+      {loading && <LoadingState />}
+      {error && (
+        <ErrorState
+          message={error}
+          onRetry={() => {
+            if (tab === "screens") void loadScreens();
+            else if (tab === "journeys") void loadJourneys();
+            else void loadFunnel();
+          }}
+        />
+      )}
 
       {tab === "screens" && (
         <div>
+          {!loading && !error && screens.length === 0 && (
+            <EmptyState icon="📱" title="화면 데이터가 없습니다" description="조회 버튼을 눌러 데이터를 검색하세요" />
+          )}
           {screens.length > 0 && (
             <button
               onClick={() =>
@@ -169,41 +186,27 @@ export default function AnalyticsPage({ tab }: { tab: "screens" | "funnels" | "j
               CSV
             </button>
           )}
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr style={{ borderBottom: "2px solid #e5e7eb", textAlign: "left" }}>
-                <th style={{ padding: 8 }}>화면</th>
-                <th style={{ padding: 8 }}>방문 수</th>
-                <th style={{ padding: 8 }}>고유 사용자</th>
-                <th style={{ padding: 8 }}>평균 체류시간</th>
-                <th style={{ padding: 8 }}>이탈 수</th>
-                <th style={{ padding: 8 }}>이탈률</th>
-              </tr>
-            </thead>
-            <tbody>
-              {screens.map((s) => (
-                <tr key={s.screen_id} style={{ borderBottom: "1px solid #f3f4f6" }}>
-                  <td style={{ padding: 8 }}>
-                    <code>{s.screen_id}</code>
-                  </td>
-                  <td style={{ padding: 8 }}>{s.view_count}</td>
-                  <td style={{ padding: 8 }}>{s.unique_users}</td>
-                  <td style={{ padding: 8, color: s.avg_duration_ms ? "#111" : "#ccc" }}>
-                    {s.avg_duration_ms ? formatDuration(s.avg_duration_ms) : "-"}
-                  </td>
-                  <td style={{ padding: 8 }}>{s.bounce_count}</td>
-                  <td style={{ padding: 8, color: s.bounce_rate > 0.5 ? "#dc2626" : "#111" }}>
-                    {(s.bounce_rate * 100).toFixed(1)}%
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <ScreenTable
+            screens={screens}
+            sortKey={sortKey}
+            sortDir={sortDir}
+            onSort={(key) => {
+              if (sortKey === key) {
+                setSortDir((d) => (d === "desc" ? "asc" : "desc"));
+              } else {
+                setSortKey(key);
+                setSortDir("desc");
+              }
+            }}
+          />
         </div>
       )}
 
       {tab === "journeys" && (
         <div>
+          {!loading && !error && transitions.length === 0 && (
+            <EmptyState icon="🗺️" title="여정 데이터가 없습니다" description="조회 버튼을 눌러 데이터를 검색하세요" />
+          )}
           {transitions.length > 0 && (
             <button
               onClick={() =>
@@ -265,6 +268,9 @@ export default function AnalyticsPage({ tab }: { tab: "screens" | "funnels" | "j
           <button onClick={() => void loadFunnel()} style={btnStyle}>
             분석
           </button>
+          {!loading && !error && !funnelResult && (
+            <EmptyState icon="🔍" title="퍼널 데이터가 없습니다" description="이벤트 키를 입력하고 분석 버튼을 눌러주세요" />
+          )}
           {funnelResult && (
             <button
               onClick={() =>
@@ -362,3 +368,122 @@ const rateBadge: React.CSSProperties = {
   fontSize: 14,
   fontWeight: 600,
 };
+
+/* --- 화면 분석 히트맵 테이블 --- */
+
+function bounceRateStyle(rate: number): React.CSSProperties {
+  if (rate < 0.1) return { background: "#f0fdf4", color: "#15803d" };
+  if (rate < 0.25) return { background: "#fefce8", color: "#a16207" };
+  if (rate < 0.4) return { background: "#fff7ed", color: "#c2410c" };
+  return { background: "#fef2f2", color: "#dc2626" };
+}
+
+function durationStyle(ms: number | null): React.CSSProperties {
+  if (!ms) return { color: "#ccc" };
+  const sec = ms / 1000;
+  if (sec < 3) return { background: "#fef2f2", color: "#dc2626" };
+  if (sec < 10) return { background: "#fefce8", color: "#a16207" };
+  if (sec < 120) return { background: "#f0fdf4", color: "#15803d" };
+  if (sec < 300) return { background: "#fefce8", color: "#a16207" };
+  return { background: "#fef2f2", color: "#dc2626" };
+}
+
+type SortableKey = keyof ScreenEntry;
+
+const sortableColumns: { key: SortableKey; label: string }[] = [
+  { key: "screen_id", label: "화면" },
+  { key: "view_count", label: "방문 수" },
+  { key: "unique_users", label: "고유 사용자" },
+  { key: "avg_duration_ms", label: "평균 체류시간" },
+  { key: "bounce_count", label: "이탈 수" },
+  { key: "bounce_rate", label: "이탈률" },
+];
+
+function ScreenTable({
+  screens,
+  sortKey,
+  sortDir,
+  onSort,
+}: {
+  screens: ScreenEntry[];
+  sortKey: SortableKey;
+  sortDir: "asc" | "desc";
+  onSort: (key: SortableKey) => void;
+}) {
+  const sorted = [...screens].sort((a, b) => {
+    const va = a[sortKey] ?? 0;
+    const vb = b[sortKey] ?? 0;
+    if (typeof va === "string" && typeof vb === "string") {
+      return sortDir === "desc" ? vb.localeCompare(va) : va.localeCompare(vb);
+    }
+    return sortDir === "desc" ? Number(vb) - Number(va) : Number(va) - Number(vb);
+  });
+
+  const maxView = Math.max(...screens.map((s) => s.view_count), 1);
+
+  return (
+    <table style={{ width: "100%", borderCollapse: "collapse" }}>
+      <thead>
+        <tr style={{ borderBottom: "2px solid #e5e7eb", textAlign: "left" }}>
+          {sortableColumns.map((col) => (
+            <th
+              key={col.key}
+              onClick={() => onSort(col.key)}
+              style={{ padding: 8, cursor: "pointer", userSelect: "none", fontSize: 13 }}
+            >
+              {col.label} {sortKey === col.key ? (sortDir === "desc" ? "▼" : "▲") : ""}
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {sorted.map((s) => (
+          <tr key={s.screen_id} style={{ borderBottom: "1px solid #f3f4f6" }}>
+            <td style={{ padding: 8 }}>
+              <code>{s.screen_id}</code>
+            </td>
+            <td style={{ padding: "8px 8px 8px 0", position: "relative" }}>
+              <div
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  top: 4,
+                  bottom: 4,
+                  width: `${(s.view_count / maxView) * 100}%`,
+                  background: "#EEF2FF",
+                  borderRadius: 4,
+                }}
+              />
+              <span style={{ position: "relative", padding: "0 8px", fontWeight: 500 }}>
+                {s.view_count.toLocaleString()}
+              </span>
+            </td>
+            <td style={{ padding: 8 }}>{s.unique_users.toLocaleString()}</td>
+            <td
+              style={{
+                padding: 8,
+                borderRadius: 4,
+                fontWeight: 500,
+                ...durationStyle(s.avg_duration_ms),
+              }}
+            >
+              {s.avg_duration_ms ? formatDuration(s.avg_duration_ms) : "-"}
+            </td>
+            <td style={{ padding: 8 }}>{s.bounce_count.toLocaleString()}</td>
+            <td
+              style={{
+                padding: "4px 8px",
+                borderRadius: 4,
+                fontWeight: 600,
+                fontSize: 13,
+                ...bounceRateStyle(s.bounce_rate),
+              }}
+            >
+              {(s.bounce_rate * 100).toFixed(1)}%
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}

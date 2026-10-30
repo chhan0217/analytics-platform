@@ -293,7 +293,29 @@
 | `date` | YYYY-MM-DD | 기준 날짜 (기본: 오늘, KST 기준) |
 | `application_id` | UUID | 앱 필터 (선택) |
 
+### 개요 응답 (`/overview`)
+
+이전 기간(동일 길이) 집계를 `previous` 필드로 함께 반환한다.
+
+```json
+{
+  "data": {
+    "total_events": 1234,
+    "total_sessions": 567,
+    "total_users": 89,
+    "period": { "start_date": "...", "end_date": "..." },
+    "previous": {
+      "total_events": 1097,
+      "total_sessions": 586,
+      "total_users": 82
+    }
+  }
+}
+```
+
 ### 활성 사용자 응답
+
+이전 기간 DAU/WAU/MAU를 `previous_dau/wau/mau` 필드로 함께 반환한다.
 
 ```json
 {
@@ -302,7 +324,10 @@
     "dau": 18,
     "wau": 35,
     "mau": 80,
-    "stickiness": 0.225
+    "stickiness": 0.225,
+    "previous_dau": 15,
+    "previous_wau": 30,
+    "previous_mau": 70
   }
 }
 ```

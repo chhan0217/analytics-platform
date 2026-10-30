@@ -112,30 +112,33 @@
 - schema_version별 검증 규칙 적용
 - 속성 타입 검증 (STRING/INTEGER/FLOAT 등)
 
-### 세션 리플레이 (신규, 진행 중)
+### 세션 리플레이 (완료)
 
 설계 문서: `docs/session-replay-design.md`
 
 구현 완료:
-- 세션 목록 API (`GET /admin/projects/{id}/sessions`)
-- 세션 타임라인 API (`GET /admin/projects/{id}/sessions/{id}/replay`)
-- 대시보드 세션 목록 페이지 (날짜 필터, 페이지네이션)
-- 대시보드 타임라인 뷰어 (재생 컨트롤 0.5x~4x, 이벤트 패널)
-- 앱 화면 에디터 (JSON 제작 + 실시간 미리보기 + CRUD)
-- LayoutWireframe 렌더러 (column, row, header, text, button, card, list, navigation, imagePlaceholder, spacer, divider)
-- 렌더러 속성: padding, spacing, distribution, alignment, underline, active, width, height
-- header/navigation 자동 고정 + 내부 스크롤
-- JSON 파일 업로드 기능
-- 미리보기 에러 바운더리
+- 세션 목록/타임라인 API + 대시보드 뷰어 (재생 0.5x~4x, 이벤트 패널)
+- 앱 화면 React 컴포넌트 (플로우별 미리보기)
+- **React 컴포넌트 방식 화면 렌더링** (9개 화면: splash, onboard, login, find_id, reset_password, register_term/pass/input/complete)
+- **인터랙션 하이라이트** (Highlight 컴포넌트 + element_id 매칭 + 펄스 애니메이션)
+- **화면 전환 애니메이션** (페이드아웃 + 슬라이드인)
+- **이벤트 패널 동기화** (현재 화면 이벤트 하이라이트, 클릭 시 화면 이동/요소 강조)
+- **플로우별 미리보기** (온보딩/로그인/회원가입 그룹핑 + 화살표 연결)
+- Highlight 컴포넌트 (element_id 매칭 + 펄스 애니메이션)
+- **SDK 채비 앱 적용** (trackScreen 8개 화면 + button_click 16개 요소)
 
 설계 변경:
-- SDK 자동 캡처 (Compose Semantics Tree) → **폐기** (캡처 품질 한계, Compose 내부 API 의존)
-- 수동 JSON 에디터 방식으로 확정 (`screen_layouts` 테이블)
-- SDK 캡처 관련 코드 전부 제거 완료 (ScreenCapturer, ScreenCaptureManager, HttpTemplateSender, enableReplay)
+- SDK 자동 캡처 → **폐기** → JSON DSL 방식 → **React 컴포넌트 방식으로 전환**
+- JSON 에디터/LayoutWireframe 렌더러 제거
 
-미구현:
-- 리플레이 ↔ 앱 화면 연동 (screen_id 매칭)
-- 인터랙션 하이라이트 (button_click → 해당 버튼 강조)
+### 대시보드 UX 통일 (완료)
+
+- 공통 컴포넌트 3개 신규 생성 (`components/LoadingState.tsx`, `ErrorState.tsx`, `EmptyState.tsx`)
+- `LoadingState`: 스피너 애니메이션 + 텍스트
+- `ErrorState`: 에러 아이콘 + 메시지 + 재시도 버튼 (빨간 배경 카드)
+- `EmptyState`: 아이콘 + 제목 + 설명
+- 적용 페이지: EventsPage, EventSummaryPage, TrendPage, AnalyticsPage, RetentionPage, SessionListPage, SessionReplayPage, OverviewPage, TaxonomyPage (총 9개)
+- RetentionPage, TaxonomyPage에 누락됐던 로딩/에러 상태 처리 추가
 
 ## 3. 다음 작업 우선순위 제안
 
@@ -150,5 +153,6 @@
 | 7 | ~~parseDateRange 버그 수정~~ | → **완료** |
 | 8 | ~~리텐션 분석 API + 대시보드~~ | → **완료** |
 | 9 | ~~시계열 추이 API + 차트~~ | → **완료** |
-| 10 | 세션 리플레이 ↔ 앱 화면 연동 | screen_id 매칭 + 인터랙션 하이라이트 |
+| 10 | ~~세션 리플레이 ↔ 앱 화면 연동~~ | → **완료** |
 | 11 | 텍소노미 필수 속성 검증 | 데이터 품질 보장 |
+| 12 | 추가 화면 구현 (메인, 충전, 마이페이지) | 세션 리플레이 커버리지 확장 |

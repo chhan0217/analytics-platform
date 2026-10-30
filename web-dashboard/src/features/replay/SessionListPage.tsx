@@ -5,6 +5,9 @@ import { api } from "../../api/client";
 import { useProject } from "../../context/ProjectContext";
 import type { ListResponse, SessionListEntry } from "../../api/types";
 import DateRangeFilter from "../../components/DateRangeFilter";
+import LoadingState from "../../components/LoadingState";
+import ErrorState from "../../components/ErrorState";
+import EmptyState from "../../components/EmptyState";
 
 function formatDuration(startedAt: string, endedAt: string | null, lastEventAt: string): string {
   const end = endedAt || lastEventAt;
@@ -66,10 +69,11 @@ export default function SessionListPage() {
         loading={loading}
       />
 
-      {error && <p style={{ color: "#ef4444" }}>{error}</p>}
+      {loading && <LoadingState />}
+      {error && <ErrorState message={error} onRetry={() => load(1)} />}
 
       {sessions.length === 0 && !loading && !error && (
-        <p style={{ color: "#9ca3af" }}>조회 버튼을 눌러 세션을 검색하세요.</p>
+        <EmptyState icon="🔍" title="세션이 없습니다" description="조회 버튼을 눌러 세션을 검색하세요." />
       )}
 
       {sessions.length > 0 && (

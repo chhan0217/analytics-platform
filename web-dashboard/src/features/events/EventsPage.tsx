@@ -3,6 +3,9 @@ import { todayKst, daysAgoKst, formatKstDateTime } from "../../utils/date";
 import { api } from "../../api/client";
 import { useProject } from "../../context/ProjectContext";
 import DateRangeFilter from "../../components/DateRangeFilter";
+import LoadingState from "../../components/LoadingState";
+import ErrorState from "../../components/ErrorState";
+import EmptyState from "../../components/EmptyState";
 import type { CursorListResponse, AnalyticsEvent } from "../../api/types";
 
 export default function EventsPage() {
@@ -63,9 +66,11 @@ export default function EventsPage() {
           />
         </DateRangeFilter>
 
-        {loading && <p style={{ color: "#6b7280" }}>로딩 중...</p>}
-        {error && <p style={{ color: "#dc2626" }}>{error}</p>}
-        {loaded && events.length === 0 && !loading && <p style={{ color: "#666" }}>이벤트가 없습니다.</p>}
+        {loading && <LoadingState />}
+        {error && <ErrorState message={error} onRetry={() => load()} />}
+        {loaded && events.length === 0 && !loading && (
+          <EmptyState icon="📋" title="이벤트가 없습니다" description="조건을 변경하여 다시 검색해 보세요." />
+        )}
 
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
           <thead>

@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { api } from "../../api/client";
 import { useProject } from "../../context/ProjectContext";
 import type { ListResponse, TaxonomyEvent, TaxonomyProperty, DataResponse } from "../../api/types";
+import LoadingState from "../../components/LoadingState";
+import ErrorState from "../../components/ErrorState";
+import EmptyState from "../../components/EmptyState";
 
 export default function TaxonomyPage() {
   const { selectedProject } = useProject();
@@ -14,12 +17,22 @@ export default function TaxonomyPage() {
   const [propKey, setPropKey] = useState("");
   const [propType, setPropType] = useState("STRING");
   const [propRequired, setPropRequired] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const loadEvents = async () => {
-    const res = await api<ListResponse<TaxonomyEvent>>(
-      `/admin/projects/${projectId}/taxonomy/events?page_size=100`,
-    );
-    setEvents(res.data);
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api<ListResponse<TaxonomyEvent>>(
+        `/admin/projects/${projectId}/taxonomy/events?page_size=100`,
+      );
+      setEvents(res.data);
+    } catch {
+      setError("텍소노미 이벤트를 불러오지 못했습니다.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const loadProperties = async (eventId: string) => {
@@ -96,6 +109,11 @@ export default function TaxonomyPage() {
             등록
           </button>
         </form>
+        {loading && <LoadingState />}
+        {error && <ErrorState message={error} onRetry={() => void loadEvents()} />}
+        {!loading && !error && events.length === 0 && (
+          <EmptyState icon="📋" title="등록된 이벤트가 없습니다" description="위 폼에서 이벤트를 등록해보세요" />
+        )}
         <div>
           {events.map((evt) => (
             <div

@@ -5,6 +5,9 @@ import { useProject } from "../../context/ProjectContext";
 import type { DataResponse, RetentionResponse } from "../../api/types";
 import { downloadCsv } from "../../utils/csv";
 import DateRangeFilter from "../../components/DateRangeFilter";
+import LoadingState from "../../components/LoadingState";
+import ErrorState from "../../components/ErrorState";
+import EmptyState from "../../components/EmptyState";
 
 const defaultStart = daysAgoKst(30);
 const defaultEnd = todayKst();
@@ -35,15 +38,19 @@ export default function RetentionPage() {
   const [retentionDays, setRetentionDays] = useState("1,7,30");
   const [data, setData] = useState<RetentionResponse | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const load = async () => {
     if (!selectedProject) return;
     setLoading(true);
+    setError(null);
     try {
       const res = await api<DataResponse<RetentionResponse>>(
         `/admin/projects/${selectedProject.id}/analytics/retention?start_date=${startDate}&end_date=${endDate}&type=${type}&retention_days=${retentionDays}`,
       );
       setData(res.data);
+    } catch {
+      setError("리텐션 데이터를 불러오지 못했습니다.");
     } finally {
       setLoading(false);
     }
@@ -93,7 +100,7 @@ export default function RetentionPage() {
                 ...days.map((d) => `D${d} 수`),
                 ...days.map((d) => `D${d} 비율`),
               ];
-              const rows = data.cohorts.map((c) => [
+              const rows = [...data.cohorts].reverse().map((c) => [
                 c.date,
                 c.cohort_size,
                 ...days.map((d) => c.retention[String(d)]?.count ?? ""),
@@ -119,6 +126,12 @@ export default function RetentionPage() {
           : "해당 날짜에 활동한 모든 사용자가 D-N일 후에 다시 사용한 비율"}
       </p>
 
+      {loading && <LoadingState />}
+      {error && <ErrorState message={error} onRetry={() => void load()} />}
+      {!loading && !error && !data && (
+        <EmptyState icon="🔄" title="리텐션 데이터가 없습니다" description="조회 버튼을 눌러 데이터를 검색하세요" />
+      )}
+
       {/* 히트맵 테이블 */}
       {data && (
         <div style={{ overflowX: "auto" }}>
@@ -137,7 +150,7 @@ export default function RetentionPage() {
               </tr>
             </thead>
             <tbody>
-              {data.cohorts.map((cohort) => (
+              {[...data.cohorts].reverse().map((cohort) => (
                 <tr key={cohort.date} style={{ borderBottom: "1px solid #e5e7eb" }}>
                   <td style={{ padding: 8, whiteSpace: "nowrap" }}>{cohort.date}</td>
                   <td style={{ padding: 8, textAlign: "right", fontWeight: 600 }}>

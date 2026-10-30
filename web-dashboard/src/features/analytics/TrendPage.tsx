@@ -15,6 +15,9 @@ import { downloadCsv } from "../../utils/csv";
 import { useProject } from "../../context/ProjectContext";
 import type { DataResponse } from "../../api/types";
 import DateRangeFilter from "../../components/DateRangeFilter";
+import LoadingState from "../../components/LoadingState";
+import ErrorState from "../../components/ErrorState";
+import EmptyState from "../../components/EmptyState";
 
 interface TrendDataPoint {
   date: string;
@@ -198,14 +201,10 @@ export default function TrendPage() {
         )}
       </div>
 
-      {loading && <p style={{ color: "#6b7280" }}>로딩 중...</p>}
-      {error && (
-        <p style={{ color: "#dc2626" }}>
-          {error}{" "}
-          <button onClick={() => void load()} style={{ color: "#4f46e5", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
-            다시 시도
-          </button>
-        </p>
+      {loading && <LoadingState />}
+      {error && <ErrorState message={error} onRetry={() => void load()} />}
+      {!loading && !error && chartData.length === 0 && (
+        <EmptyState icon="📈" title="추이 데이터가 없습니다" description="조회 버튼을 눌러 데이터를 검색하세요" />
       )}
 
       {summary && (

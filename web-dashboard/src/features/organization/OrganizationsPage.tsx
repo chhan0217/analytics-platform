@@ -3,15 +3,28 @@ import { formatKstDateTime } from "../../utils/date";
 import { api } from "../../api/client";
 import { useProject } from "../../context/ProjectContext";
 import type { ListResponse, Organization, DataResponse } from "../../api/types";
+import LoadingState from "../../components/LoadingState";
+import ErrorState from "../../components/ErrorState";
+import EmptyState from "../../components/EmptyState";
 
 export default function OrganizationsPage() {
   const [orgs, setOrgs] = useState<Organization[]>([]);
   const [name, setName] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { selectedOrg, selectOrg, reloadOrgs } = useProject();
 
   const load = async () => {
-    const res = await api<ListResponse<Organization>>("/admin/organizations");
-    setOrgs(res.data);
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api<ListResponse<Organization>>("/admin/organizations");
+      setOrgs(res.data);
+    } catch {
+      setError("조직 목록을 불러오지 못했습니다.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -55,6 +68,12 @@ export default function OrganizationsPage() {
           생성
         </button>
       </form>
+      {loading && <LoadingState />}
+      {error && <ErrorState message={error} onRetry={load} />}
+      {!loading && !error && orgs.length === 0 && (
+        <EmptyState icon="🏢" title="등록된 조직이 없습니다" />
+      )}
+      {orgs.length > 0 && (
       <table style={{ width: "100%", borderCollapse: "collapse" }}>
         <thead>
           <tr style={{ borderBottom: "2px solid #e5e7eb", textAlign: "left" }}>
@@ -104,6 +123,7 @@ export default function OrganizationsPage() {
           ))}
         </tbody>
       </table>
+      )}
     </div>
   );
 }

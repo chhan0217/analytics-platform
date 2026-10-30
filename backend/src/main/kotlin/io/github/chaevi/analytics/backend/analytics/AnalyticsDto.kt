@@ -8,6 +8,14 @@ data class OverviewResponse(
     val totalSessions: Long,
     val totalUsers: Long,
     val period: PeriodInfo,
+    val previous: OverviewPrevious? = null,
+)
+
+@Serializable
+data class OverviewPrevious(
+    val totalEvents: Long,
+    val totalSessions: Long,
+    val totalUsers: Long,
 )
 
 @Serializable
@@ -157,4 +165,7 @@ data class ActiveUsersResponse(
     val wau: Long,
     val mau: Long,
     val stickiness: Double,
+    val previousDau: Long? = null,
+    val previousWau: Long? = null,
+    val previousMau: Long? = null,
 )

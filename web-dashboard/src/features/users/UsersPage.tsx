@@ -3,6 +3,9 @@ import { formatKstDateTime } from "../../utils/date";
 import { api } from "../../api/client";
 import { useProject } from "../../context/ProjectContext";
 import type { ListResponse } from "../../api/types";
+import LoadingState from "../../components/LoadingState";
+import ErrorState from "../../components/ErrorState";
+import EmptyState from "../../components/EmptyState";
 
 interface UserResult {
   id: string;
@@ -37,24 +40,36 @@ export default function UsersPage() {
   const [sessions, setSessions] = useState<SessionResult[]>([]);
   const [events, setEvents] = useState<SessionEvent[]>([]);
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [searched, setSearched] = useState(false);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!projectId || !searchValue) return;
+    setLoading(true);
+    setError(null);
     setSessions([]);
     setEvents([]);
     setSelectedSession(null);
 
-    const param =
-      searchType === "external" ? `external_user_id=${searchValue}` : `anonymous_id=${searchValue}`;
-    const res = await api<ListResponse<UserResult>>(`/admin/projects/${projectId}/users?${param}`);
-    setUsers(res.data);
+    try {
+      const param =
+        searchType === "external" ? `external_user_id=${searchValue}` : `anonymous_id=${searchValue}`;
+      const res = await api<ListResponse<UserResult>>(`/admin/projects/${projectId}/users?${param}`);
+      setUsers(res.data);
 
-    if (res.data.length > 0) {
-      const sessRes = await api<ListResponse<SessionResult>>(
-        `/admin/projects/${projectId}/users/${res.data[0].id}/sessions`,
-      );
-      setSessions(sessRes.data);
+      if (res.data.length > 0) {
+        const sessRes = await api<ListResponse<SessionResult>>(
+          `/admin/projects/${projectId}/users/${res.data[0].id}/sessions`,
+        );
+        setSessions(sessRes.data);
+      }
+    } catch {
+      setError("사용자 검색에 실패했습니다.");
+    } finally {
+      setLoading(false);
+      setSearched(true);
     }
   };
 
@@ -101,6 +116,12 @@ export default function UsersPage() {
           검색
         </button>
       </form>
+
+      {loading && <LoadingState message="사용자 검색 중..." />}
+      {error && <ErrorState message={error} onRetry={() => void handleSearch({ preventDefault: () => {} } as React.FormEvent)} />}
+      {searched && !loading && !error && users.length === 0 && (
+        <EmptyState icon="🔍" title="검색 결과가 없습니다" description="다른 검색어로 다시 시도해보세요" />
+      )}
 
       {users.length > 0 && (
         <div style={{ marginBottom: "1.5rem" }}>
