@@ -53,13 +53,58 @@ function StatusBar() {
   );
 }
 
-const phone: React.CSSProperties = { width: 280, height: 700, background: "#fff", borderRadius: 32, display: "flex", flexDirection: "column", boxShadow: "0 2px 40px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.06)", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", overflow: "hidden", margin: "0 auto" };
-const statusBar: React.CSSProperties = { height: 44, display: "flex", justifyContent: "space-between", alignItems: "flex-end", padding: "0 20px 6px", fontSize: 13, color: "#111", flexShrink: 0 };
-const appBar: React.CSSProperties = { height: 48, display: "flex", alignItems: "center", padding: "0 12px", flexShrink: 0, borderBottom: "1px solid #f0f0f0" };
+const phone: React.CSSProperties = {
+  width: 280,
+  height: 700,
+  background: "#fff",
+  borderRadius: 32,
+  display: "flex",
+  flexDirection: "column",
+  boxShadow: "0 2px 40px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.06)",
+  fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+  overflow: "hidden",
+  margin: "0 auto",
+};
+const statusBar: React.CSSProperties = {
+  height: 44,
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "flex-end",
+  padding: "0 20px 6px",
+  fontSize: 13,
+  color: "#111",
+  flexShrink: 0,
+};
+const appBar: React.CSSProperties = {
+  height: 48,
+  display: "flex",
+  alignItems: "center",
+  padding: "0 12px",
+  flexShrink: 0,
+  borderBottom: "1px solid #f0f0f0",
+};
 const progressTrack: React.CSSProperties = { height: 4, background: "#f3f4f6", flexShrink: 0 };
 const progressFill: React.CSSProperties = { height: "100%", background: "#4f46e5" };
-const content: React.CSSProperties = { flex: 1, display: "flex", flexDirection: "column", padding: "0 20px", overflow: "auto" };
+const content: React.CSSProperties = {
+  flex: 1,
+  display: "flex",
+  flexDirection: "column",
+  padding: "0 20px",
+  overflow: "auto",
+};
 const title: React.CSSProperties = { fontSize: 22, fontWeight: 800, color: "#111" };
 const desc: React.CSSProperties = { fontSize: 13, color: "#333" };
 const divider: React.CSSProperties = { height: 1, background: "#e5e7eb" };
-const outlinedBtn: React.CSSProperties = { height: 48, borderRadius: 8, border: "1px solid #4f46e5", background: "#fff", color: "#4f46e5", fontSize: 14, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 };
+const outlinedBtn: React.CSSProperties = {
+  height: 48,
+  borderRadius: 8,
+  border: "1px solid #4f46e5",
+  background: "#fff",
+  color: "#4f46e5",
+  fontSize: 14,
+  fontWeight: 600,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  flexShrink: 0,
+};

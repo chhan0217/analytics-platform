@@ -100,16 +100,18 @@ export default function RetentionPage() {
                 ...days.map((d) => `D${d} 수`),
                 ...days.map((d) => `D${d} 비율`),
               ];
-              const rows = [...data.cohorts].reverse().map((c) => [
-                c.date,
-                c.cohort_size,
-                ...days.map((d) => c.retention[String(d)]?.count ?? ""),
-                ...days.map((d) =>
-                  c.retention[String(d)]
-                    ? (c.retention[String(d)].rate * 100).toFixed(1) + "%"
-                    : "",
-                ),
-              ]);
+              const rows = [...data.cohorts]
+                .reverse()
+                .map((c) => [
+                  c.date,
+                  c.cohort_size,
+                  ...days.map((d) => c.retention[String(d)]?.count ?? ""),
+                  ...days.map((d) =>
+                    c.retention[String(d)]
+                      ? (c.retention[String(d)].rate * 100).toFixed(1) + "%"
+                      : "",
+                  ),
+                ]);
               downloadCsv(`retention_${type}_${startDate}_${endDate}.csv`, headers, rows);
             }}
             style={csvBtnStyle}
@@ -129,7 +131,11 @@ export default function RetentionPage() {
       {loading && <LoadingState />}
       {error && <ErrorState message={error} onRetry={() => void load()} />}
       {!loading && !error && !data && (
-        <EmptyState icon="🔄" title="리텐션 데이터가 없습니다" description="조회 버튼을 눌러 데이터를 검색하세요" />
+        <EmptyState
+          icon="🔄"
+          title="리텐션 데이터가 없습니다"
+          description="조회 버튼을 눌러 데이터를 검색하세요"
+        />
       )}
 
       {/* 히트맵 테이블 */}

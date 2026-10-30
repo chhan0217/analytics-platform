@@ -93,11 +93,7 @@ export default function AppScreensPage() {
                           {p.screen_id}
                         </div>
                       </div>
-                      {ScreenComp ? (
-                        <ScreenComp />
-                      ) : (
-                        <div style={previewEmpty}>화면 미등록</div>
-                      )}
+                      {ScreenComp ? <ScreenComp /> : <div style={previewEmpty}>화면 미등록</div>}
                     </div>
                     {i < flowScreens.length - 1 && (
                       <div style={flowArrow}>

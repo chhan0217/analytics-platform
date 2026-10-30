@@ -144,7 +144,11 @@ export default function EventSummaryPage() {
         {loading && <LoadingState />}
         {error && <ErrorState message={error} onRetry={() => void loadSummary()} />}
         {loaded && events.length === 0 && !loading && (
-          <EmptyState icon="📊" title="이벤트가 없습니다" description="조건을 변경하여 다시 검색해 보세요." />
+          <EmptyState
+            icon="📊"
+            title="이벤트가 없습니다"
+            description="조건을 변경하여 다시 검색해 보세요."
+          />
         )}
 
         {events.length > 0 && (

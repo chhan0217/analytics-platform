@@ -130,9 +130,7 @@ export default function SessionReplayPage() {
     interactions.forEach((e, i) => {
       const elId = e.properties.element_id;
       if (!elId) return;
-      timers.push(
-        setTimeout(() => setHighlightId(elId), interval * (i + 1)),
-      );
+      timers.push(setTimeout(() => setHighlightId(elId), interval * (i + 1)));
     });
 
     return () => timers.forEach(clearTimeout);
@@ -221,9 +219,7 @@ export default function SessionReplayPage() {
                     <div style={{ fontSize: 16, fontWeight: 600, color: "#4f46e5" }}>
                       {currentScreen?.screen_id || "화면 없음"}
                     </div>
-                    <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 4 }}>
-                      화면 미등록
-                    </div>
+                    <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 4 }}>화면 미등록</div>
                   </div>
                 )}
               </div>
@@ -307,22 +303,27 @@ export default function SessionReplayPage() {
                   }
                   if (e.event_key === "screen_view") {
                     const idx = screenEvents.findIndex((se) => se.event_id === e.event_id);
-                    if (idx !== -1) { setIsPlaying(false); setCurrentIndex(idx); }
+                    if (idx !== -1) {
+                      setIsPlaying(false);
+                      setCurrentIndex(idx);
+                    }
                   }
                 }}
                 style={{
                   ...eventItem,
                   cursor: "pointer",
-                  background: currentScreen?.event_id === e.event_id
-                    ? "#eef2ff"
-                    : currentScreenEvents.some((ce) => ce.event_id === e.event_id)
-                      ? "#f9fafb"
-                      : "transparent",
-                  borderLeft: currentScreen?.event_id === e.event_id
-                    ? "3px solid #4f46e5"
-                    : currentScreenEvents.some((ce) => ce.event_id === e.event_id)
-                      ? "3px solid #c7d2fe"
-                      : "3px solid transparent",
+                  background:
+                    currentScreen?.event_id === e.event_id
+                      ? "#eef2ff"
+                      : currentScreenEvents.some((ce) => ce.event_id === e.event_id)
+                        ? "#f9fafb"
+                        : "transparent",
+                  borderLeft:
+                    currentScreen?.event_id === e.event_id
+                      ? "3px solid #4f46e5"
+                      : currentScreenEvents.some((ce) => ce.event_id === e.event_id)
+                        ? "3px solid #c7d2fe"
+                        : "3px solid transparent",
                   transition: "all 0.2s ease",
                 }}
               >

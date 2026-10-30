@@ -218,9 +218,7 @@ export default function ApplicationsPage() {
                         {c.status}
                       </span>
                     </td>
-                    <td style={{ padding: 4, color: "#666" }}>
-                      {formatKstDateTime(c.created_at)}
-                    </td>
+                    <td style={{ padding: 4, color: "#666" }}>{formatKstDateTime(c.created_at)}</td>
                     <td style={{ padding: 4, display: "flex", gap: 8 }}>
                       <button
                         onClick={() => {

@@ -131,16 +131,103 @@ function SocialIcon({
   );
 }
 
-const phone: React.CSSProperties = { width: 280, height: 700, background: "#fff", borderRadius: 32, display: "flex", flexDirection: "column", boxShadow: "0 2px 40px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.06)", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", overflow: "hidden", margin: "0 auto" };
-const statusBar: React.CSSProperties = { height: 44, display: "flex", justifyContent: "space-between", alignItems: "flex-end", padding: "0 20px 6px", fontSize: 13, color: "#111", flexShrink: 0 };
-const content: React.CSSProperties = { flex: 1, display: "flex", flexDirection: "column", padding: "0 20px", overflow: "auto" };
-const logoArea: React.CSSProperties = { flex: 1, display: "flex", alignItems: "center", justifyContent: "center", minHeight: 120 };
+const phone: React.CSSProperties = {
+  width: 280,
+  height: 700,
+  background: "#fff",
+  borderRadius: 32,
+  display: "flex",
+  flexDirection: "column",
+  boxShadow: "0 2px 40px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.06)",
+  fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+  overflow: "hidden",
+  margin: "0 auto",
+};
+const statusBar: React.CSSProperties = {
+  height: 44,
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "flex-end",
+  padding: "0 20px 6px",
+  fontSize: 13,
+  color: "#111",
+  flexShrink: 0,
+};
+const content: React.CSSProperties = {
+  flex: 1,
+  display: "flex",
+  flexDirection: "column",
+  padding: "0 20px",
+  overflow: "auto",
+};
+const logoArea: React.CSSProperties = {
+  flex: 1,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  minHeight: 120,
+};
 const logoPlaceholder: React.CSSProperties = { marginTop: 40 };
-const outlinedBtn: React.CSSProperties = { height: 48, borderRadius: 10, border: "1px solid #4f46e5", background: "#fff", color: "#4f46e5", fontSize: 14, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 };
-const primaryBtn: React.CSSProperties = { height: 48, borderRadius: 10, background: "#4f46e5", color: "#fff", fontSize: 14, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 };
-const skipText: React.CSSProperties = { textAlign: "center", fontSize: 13, color: "#9ca3af", textDecoration: "underline", flexShrink: 0 };
-const dividerRow: React.CSSProperties = { display: "flex", alignItems: "center", gap: 8, flexShrink: 0 };
+const outlinedBtn: React.CSSProperties = {
+  height: 48,
+  borderRadius: 10,
+  border: "1px solid #4f46e5",
+  background: "#fff",
+  color: "#4f46e5",
+  fontSize: 14,
+  fontWeight: 600,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  flexShrink: 0,
+};
+const primaryBtn: React.CSSProperties = {
+  height: 48,
+  borderRadius: 10,
+  background: "#4f46e5",
+  color: "#fff",
+  fontSize: 14,
+  fontWeight: 600,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  flexShrink: 0,
+};
+const skipText: React.CSSProperties = {
+  textAlign: "center",
+  fontSize: 13,
+  color: "#9ca3af",
+  textDecoration: "underline",
+  flexShrink: 0,
+};
+const dividerRow: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 8,
+  flexShrink: 0,
+};
 const dividerLine: React.CSSProperties = { flex: 1, height: 1, background: "#e5e7eb" };
-const dividerLabel: React.CSSProperties = { fontSize: 12, fontWeight: 600, color: "#9ca3af", whiteSpace: "nowrap" };
-const socialRow: React.CSSProperties = { display: "flex", justifyContent: "center", gap: 20, flexShrink: 0 };
-const porscheBtn: React.CSSProperties = { height: 48, borderRadius: 8, background: "#333", color: "#fff", fontSize: 14, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 };
+const dividerLabel: React.CSSProperties = {
+  fontSize: 12,
+  fontWeight: 600,
+  color: "#9ca3af",
+  whiteSpace: "nowrap",
+};
+const socialRow: React.CSSProperties = {
+  display: "flex",
+  justifyContent: "center",
+  gap: 20,
+  flexShrink: 0,
+};
+const porscheBtn: React.CSSProperties = {
+  height: 48,
+  borderRadius: 8,
+  background: "#333",
+  color: "#fff",
+  fontSize: 14,
+  fontWeight: 700,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  flexShrink: 0,
+};

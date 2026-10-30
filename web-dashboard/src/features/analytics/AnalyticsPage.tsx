@@ -163,7 +163,11 @@ export default function AnalyticsPage({ tab }: { tab: "screens" | "funnels" | "j
       {tab === "screens" && (
         <div>
           {!loading && !error && screens.length === 0 && (
-            <EmptyState icon="📱" title="화면 데이터가 없습니다" description="조회 버튼을 눌러 데이터를 검색하세요" />
+            <EmptyState
+              icon="📱"
+              title="화면 데이터가 없습니다"
+              description="조회 버튼을 눌러 데이터를 검색하세요"
+            />
           )}
           {screens.length > 0 && (
             <button
@@ -205,7 +209,11 @@ export default function AnalyticsPage({ tab }: { tab: "screens" | "funnels" | "j
       {tab === "journeys" && (
         <div>
           {!loading && !error && transitions.length === 0 && (
-            <EmptyState icon="🗺️" title="여정 데이터가 없습니다" description="조회 버튼을 눌러 데이터를 검색하세요" />
+            <EmptyState
+              icon="🗺️"
+              title="여정 데이터가 없습니다"
+              description="조회 버튼을 눌러 데이터를 검색하세요"
+            />
           )}
           {transitions.length > 0 && (
             <button
@@ -269,7 +277,11 @@ export default function AnalyticsPage({ tab }: { tab: "screens" | "funnels" | "j
             분석
           </button>
           {!loading && !error && !funnelResult && (
-            <EmptyState icon="🔍" title="퍼널 데이터가 없습니다" description="이벤트 키를 입력하고 분석 버튼을 눌러주세요" />
+            <EmptyState
+              icon="🔍"
+              title="퍼널 데이터가 없습니다"
+              description="이벤트 키를 입력하고 분석 버튼을 눌러주세요"
+            />
           )}
           {funnelResult && (
             <button

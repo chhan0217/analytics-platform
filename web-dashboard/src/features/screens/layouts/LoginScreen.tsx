@@ -17,11 +17,19 @@ export default function LoginScreen({ highlightId }: ScreenProps) {
         <div style={{ height: 48 }} />
 
         <div style={emailRow}>
-          <Highlight elementId="emailInput" activeId={highlightId} style={{ ...inputField, flex: 1 }}>
+          <Highlight
+            elementId="emailInput"
+            activeId={highlightId}
+            style={{ ...inputField, flex: 1 }}
+          >
             <span style={placeholder}>이메일</span>
           </Highlight>
           <span style={atSymbol}>@</span>
-          <Highlight elementId="emailDomainSelector" activeId={highlightId} style={{ ...inputField, flex: 1 }}>
+          <Highlight
+            elementId="emailDomainSelector"
+            activeId={highlightId}
+            style={{ ...inputField, flex: 1 }}
+          >
             <span style={placeholder}>직접입력 ∨</span>
           </Highlight>
         </div>
@@ -30,7 +38,14 @@ export default function LoginScreen({ highlightId }: ScreenProps) {
 
         <Highlight elementId="passwordInput" activeId={highlightId} style={inputField}>
           <span style={placeholder}>비밀번호</span>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#bbb" strokeWidth="1.5">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#bbb"
+            strokeWidth="1.5"
+          >
             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
             <circle cx="12" cy="12" r="3" />
           </svg>
@@ -94,19 +109,95 @@ function StatusBar() {
   );
 }
 
-const phone: React.CSSProperties = { width: 280, height: 700, background: "#fff", borderRadius: 32, display: "flex", flexDirection: "column", boxShadow: "0 2px 40px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.06)", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", overflow: "hidden", margin: "0 auto" };
-const statusBar: React.CSSProperties = { height: 44, display: "flex", justifyContent: "space-between", alignItems: "flex-end", padding: "0 20px 6px", fontSize: 13, color: "#111", flexShrink: 0 };
-const appBar: React.CSSProperties = { height: 48, display: "flex", alignItems: "center", padding: "0 12px", flexShrink: 0, borderBottom: "1px solid #f0f0f0" };
-const content: React.CSSProperties = { flex: 1, display: "flex", flexDirection: "column", padding: "0 20px", overflow: "auto" };
+const phone: React.CSSProperties = {
+  width: 280,
+  height: 700,
+  background: "#fff",
+  borderRadius: 32,
+  display: "flex",
+  flexDirection: "column",
+  boxShadow: "0 2px 40px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.06)",
+  fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+  overflow: "hidden",
+  margin: "0 auto",
+};
+const statusBar: React.CSSProperties = {
+  height: 44,
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "flex-end",
+  padding: "0 20px 6px",
+  fontSize: 13,
+  color: "#111",
+  flexShrink: 0,
+};
+const appBar: React.CSSProperties = {
+  height: 48,
+  display: "flex",
+  alignItems: "center",
+  padding: "0 12px",
+  flexShrink: 0,
+  borderBottom: "1px solid #f0f0f0",
+};
+const content: React.CSSProperties = {
+  flex: 1,
+  display: "flex",
+  flexDirection: "column",
+  padding: "0 20px",
+  overflow: "auto",
+};
 const title: React.CSSProperties = { fontSize: 22, fontWeight: 800, color: "#111" };
 const emailRow: React.CSSProperties = { display: "flex", alignItems: "center", gap: 6 };
-const inputField: React.CSSProperties = { height: 48, border: "1px solid #d1d5db", borderRadius: 8, padding: "0 12px", display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 13, boxSizing: "border-box" };
+const inputField: React.CSSProperties = {
+  height: 48,
+  border: "1px solid #d1d5db",
+  borderRadius: 8,
+  padding: "0 12px",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  fontSize: 13,
+  boxSizing: "border-box",
+};
 const placeholder: React.CSSProperties = { color: "#9ca3af", fontSize: 13 };
 const atSymbol: React.CSSProperties = { fontSize: 16, fontWeight: 600, color: "#333" };
-const disabledBtn: React.CSSProperties = { height: 48, borderRadius: 10, background: "#d1d5db", color: "#9ca3af", fontSize: 14, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 };
-const linksRow: React.CSSProperties = { display: "flex", justifyContent: "center", alignItems: "center", gap: 12 };
-const linkText: React.CSSProperties = { fontSize: 12, fontWeight: 600, color: "#6b7280", whiteSpace: "nowrap" };
+const disabledBtn: React.CSSProperties = {
+  height: 48,
+  borderRadius: 10,
+  background: "#d1d5db",
+  color: "#9ca3af",
+  fontSize: 14,
+  fontWeight: 600,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  flexShrink: 0,
+};
+const linksRow: React.CSSProperties = {
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  gap: 12,
+};
+const linkText: React.CSSProperties = {
+  fontSize: 12,
+  fontWeight: 600,
+  color: "#6b7280",
+  whiteSpace: "nowrap",
+};
 const verticalDivider: React.CSSProperties = { width: 1, height: 14, background: "#d1d5db" };
-const corpSection: React.CSSProperties = { display: "flex", flexDirection: "column", alignItems: "center" };
+const corpSection: React.CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+};
 const corpNotice: React.CSSProperties = { fontSize: 11, color: "#9ca3af", textAlign: "center" };
-const corpBtn: React.CSSProperties = { padding: "8px 16px", borderRadius: 100, border: "1px solid #d1d5db", background: "#fff", color: "#333", fontSize: 12, fontWeight: 700 };
+const corpBtn: React.CSSProperties = {
+  padding: "8px 16px",
+  borderRadius: 100,
+  border: "1px solid #d1d5db",
+  background: "#fff",
+  color: "#333",
+  fontSize: 12,
+  fontWeight: 700,
+};

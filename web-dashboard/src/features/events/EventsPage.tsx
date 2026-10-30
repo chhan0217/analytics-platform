@@ -55,21 +55,33 @@ export default function EventsPage() {
           endDate={endDate}
           onStartDateChange={setStartDate}
           onEndDateChange={setEndDate}
-          onSearch={() => { setCursor(null); void load(); }}
+          onSearch={() => {
+            setCursor(null);
+            void load();
+          }}
           loading={loading}
         >
           <input
             value={eventKeyFilter}
             onChange={(e) => setEventKeyFilter(e.target.value)}
             placeholder="event_key 필터"
-            style={{ padding: "6px 10px", borderRadius: 6, border: "1px solid #d1d5db", fontSize: 14 }}
+            style={{
+              padding: "6px 10px",
+              borderRadius: 6,
+              border: "1px solid #d1d5db",
+              fontSize: 14,
+            }}
           />
         </DateRangeFilter>
 
         {loading && <LoadingState />}
         {error && <ErrorState message={error} onRetry={() => load()} />}
         {loaded && events.length === 0 && !loading && (
-          <EmptyState icon="📋" title="이벤트가 없습니다" description="조건을 변경하여 다시 검색해 보세요." />
+          <EmptyState
+            icon="📋"
+            title="이벤트가 없습니다"
+            description="조건을 변경하여 다시 검색해 보세요."
+          />
         )}
 
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
@@ -95,9 +107,7 @@ export default function EventsPage() {
                 <td style={{ padding: 6 }}>
                   <code>{evt.event_key}</code>
                 </td>
-                <td style={{ padding: 6, color: "#666" }}>
-                  {formatKstDateTime(evt.occurred_at)}
-                </td>
+                <td style={{ padding: 6, color: "#666" }}>{formatKstDateTime(evt.occurred_at)}</td>
                 <td style={{ padding: 6, color: "#666", fontSize: 11 }}>
                   {evt.session_id.slice(0, 8)}...
                 </td>

@@ -74,55 +74,55 @@ export default function OrganizationsPage() {
         <EmptyState icon="🏢" title="등록된 조직이 없습니다" />
       )}
       {orgs.length > 0 && (
-      <table style={{ width: "100%", borderCollapse: "collapse" }}>
-        <thead>
-          <tr style={{ borderBottom: "2px solid #e5e7eb", textAlign: "left" }}>
-            <th style={{ padding: 8 }}>이름</th>
-            <th style={{ padding: 8 }}>생성일</th>
-            <th style={{ padding: 8 }}>작업</th>
-          </tr>
-        </thead>
-        <tbody>
-          {orgs.map((org) => (
-            <tr key={org.id} style={{ borderBottom: "1px solid #e5e7eb" }}>
-              <td style={{ padding: 8 }}>{org.name}</td>
-              <td style={{ padding: 8, fontSize: 13, color: "#666" }}>
-                {formatKstDateTime(org.created_at)}
-              </td>
-              <td style={{ padding: 8 }}>
-                {selectedOrg?.id === org.id ? (
-                  <span
-                    style={{
-                      background: "#4f46e5",
-                      color: "#fff",
-                      padding: "4px 12px",
-                      borderRadius: 4,
-                      fontSize: 13,
-                    }}
-                  >
-                    선택됨
-                  </span>
-                ) : (
-                  <button
-                    onClick={() => selectOrg(org)}
-                    style={{
-                      background: "none",
-                      border: "1px solid #4f46e5",
-                      color: "#4f46e5",
-                      padding: "4px 12px",
-                      borderRadius: 4,
-                      cursor: "pointer",
-                      fontSize: 13,
-                    }}
-                  >
-                    선택
-                  </button>
-                )}
-              </td>
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead>
+            <tr style={{ borderBottom: "2px solid #e5e7eb", textAlign: "left" }}>
+              <th style={{ padding: 8 }}>이름</th>
+              <th style={{ padding: 8 }}>생성일</th>
+              <th style={{ padding: 8 }}>작업</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {orgs.map((org) => (
+              <tr key={org.id} style={{ borderBottom: "1px solid #e5e7eb" }}>
+                <td style={{ padding: 8 }}>{org.name}</td>
+                <td style={{ padding: 8, fontSize: 13, color: "#666" }}>
+                  {formatKstDateTime(org.created_at)}
+                </td>
+                <td style={{ padding: 8 }}>
+                  {selectedOrg?.id === org.id ? (
+                    <span
+                      style={{
+                        background: "#4f46e5",
+                        color: "#fff",
+                        padding: "4px 12px",
+                        borderRadius: 4,
+                        fontSize: 13,
+                      }}
+                    >
+                      선택됨
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => selectOrg(org)}
+                      style={{
+                        background: "none",
+                        border: "1px solid #4f46e5",
+                        color: "#4f46e5",
+                        padding: "4px 12px",
+                        borderRadius: 4,
+                        cursor: "pointer",
+                        fontSize: 13,
+                      }}
+                    >
+                      선택
+                    </button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       )}
     </div>
   );

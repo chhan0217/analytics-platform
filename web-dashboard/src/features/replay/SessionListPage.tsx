@@ -73,7 +73,11 @@ export default function SessionListPage() {
       {error && <ErrorState message={error} onRetry={() => load(1)} />}
 
       {sessions.length === 0 && !loading && !error && (
-        <EmptyState icon="🔍" title="세션이 없습니다" description="조회 버튼을 눌러 세션을 검색하세요." />
+        <EmptyState
+          icon="🔍"
+          title="세션이 없습니다"
+          description="조회 버튼을 눌러 세션을 검색하세요."
+        />
       )}
 
       {sessions.length > 0 && (

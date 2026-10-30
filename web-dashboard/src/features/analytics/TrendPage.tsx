@@ -147,11 +147,19 @@ export default function TrendPage() {
         onSearch={() => void load()}
         loading={loading}
       >
-        <select value={granularity} onChange={(e) => setGranularity(e.target.value)} style={selectStyle}>
+        <select
+          value={granularity}
+          onChange={(e) => setGranularity(e.target.value)}
+          style={selectStyle}
+        >
           <option value="daily">일별</option>
           <option value="hourly">시간별</option>
         </select>
-        <select value={metric} onChange={(e) => setMetric(e.target.value as MetricKey)} style={selectStyle}>
+        <select
+          value={metric}
+          onChange={(e) => setMetric(e.target.value as MetricKey)}
+          style={selectStyle}
+        >
           {Object.entries(metricLabels).map(([key, label]) => (
             <option key={key} value={key}>
               {label}
@@ -164,7 +172,15 @@ export default function TrendPage() {
         </label>
       </DateRangeFilter>
 
-      <div style={{ display: "flex", gap: 8, marginBottom: "1rem", flexWrap: "wrap", alignItems: "center" }}>
+      <div
+        style={{
+          display: "flex",
+          gap: 8,
+          marginBottom: "1rem",
+          flexWrap: "wrap",
+          alignItems: "center",
+        }}
+      >
         <input
           value={eventKey}
           onChange={(e) => setEventKey(e.target.value)}
@@ -204,7 +220,11 @@ export default function TrendPage() {
       {loading && <LoadingState />}
       {error && <ErrorState message={error} onRetry={() => void load()} />}
       {!loading && !error && chartData.length === 0 && (
-        <EmptyState icon="📈" title="추이 데이터가 없습니다" description="조회 버튼을 눌러 데이터를 검색하세요" />
+        <EmptyState
+          icon="📈"
+          title="추이 데이터가 없습니다"
+          description="조회 버튼을 눌러 데이터를 검색하세요"
+        />
       )}
 
       {summary && (

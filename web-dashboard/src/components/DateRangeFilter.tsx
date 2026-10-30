@@ -35,11 +35,7 @@ export default function DateRangeFilter({
     <div style={container}>
       <div style={presetRow}>
         {presets.map((p) => (
-          <button
-            key={p.days}
-            onClick={() => applyPreset(p.days)}
-            style={presetBtn}
-          >
+          <button key={p.days} onClick={() => applyPreset(p.days)} style={presetBtn}>
             {p.label}
           </button>
         ))}

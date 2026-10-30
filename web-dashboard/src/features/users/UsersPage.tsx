@@ -55,8 +55,12 @@ export default function UsersPage() {
 
     try {
       const param =
-        searchType === "external" ? `external_user_id=${searchValue}` : `anonymous_id=${searchValue}`;
-      const res = await api<ListResponse<UserResult>>(`/admin/projects/${projectId}/users?${param}`);
+        searchType === "external"
+          ? `external_user_id=${searchValue}`
+          : `anonymous_id=${searchValue}`;
+      const res = await api<ListResponse<UserResult>>(
+        `/admin/projects/${projectId}/users?${param}`,
+      );
       setUsers(res.data);
 
       if (res.data.length > 0) {
@@ -118,9 +122,18 @@ export default function UsersPage() {
       </form>
 
       {loading && <LoadingState message="사용자 검색 중..." />}
-      {error && <ErrorState message={error} onRetry={() => void handleSearch({ preventDefault: () => {} } as React.FormEvent)} />}
+      {error && (
+        <ErrorState
+          message={error}
+          onRetry={() => void handleSearch({ preventDefault: () => {} } as React.FormEvent)}
+        />
+      )}
       {searched && !loading && !error && users.length === 0 && (
-        <EmptyState icon="🔍" title="검색 결과가 없습니다" description="다른 검색어로 다시 시도해보세요" />
+        <EmptyState
+          icon="🔍"
+          title="검색 결과가 없습니다"
+          description="다른 검색어로 다시 시도해보세요"
+        />
       )}
 
       {users.length > 0 && (
@@ -190,9 +203,7 @@ export default function UsersPage() {
                   <div style={{ color: "#666", marginTop: 4 }}>
                     시작: {formatKstDateTime(s.started_at)}
                   </div>
-                  <div style={{ color: "#666" }}>
-                    마지막: {formatKstDateTime(s.last_event_at)}
-                  </div>
+                  <div style={{ color: "#666" }}>마지막: {formatKstDateTime(s.last_event_at)}</div>
                   <div style={{ color: "#666" }}>종료: {effectiveEndedAt}</div>
                 </div>
               );

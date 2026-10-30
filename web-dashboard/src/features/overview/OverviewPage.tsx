@@ -111,9 +111,21 @@ export default function OverviewPage() {
 
       {/* 기간 내 집계 */}
       <div style={{ display: "flex", gap: 16, marginTop: 16 }}>
-        <KpiCard label="이벤트" value={overview.total_events} previous={overview.previous?.total_events} />
-        <KpiCard label="세션" value={overview.total_sessions} previous={overview.previous?.total_sessions} />
-        <KpiCard label="사용자" value={overview.total_users} previous={overview.previous?.total_users} />
+        <KpiCard
+          label="이벤트"
+          value={overview.total_events}
+          previous={overview.previous?.total_events}
+        />
+        <KpiCard
+          label="세션"
+          value={overview.total_sessions}
+          previous={overview.previous?.total_sessions}
+        />
+        <KpiCard
+          label="사용자"
+          value={overview.total_users}
+          previous={overview.previous?.total_users}
+        />
       </div>
 
       {/* 화면별 통계 */}

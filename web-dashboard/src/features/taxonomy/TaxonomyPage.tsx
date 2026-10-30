@@ -112,7 +112,11 @@ export default function TaxonomyPage() {
         {loading && <LoadingState />}
         {error && <ErrorState message={error} onRetry={() => void loadEvents()} />}
         {!loading && !error && events.length === 0 && (
-          <EmptyState icon="📋" title="등록된 이벤트가 없습니다" description="위 폼에서 이벤트를 등록해보세요" />
+          <EmptyState
+            icon="📋"
+            title="등록된 이벤트가 없습니다"
+            description="위 폼에서 이벤트를 등록해보세요"
+          />
         )}
         <div>
           {events.map((evt) => (
